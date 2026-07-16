@@ -1268,6 +1268,21 @@
     background: rgba(168, 85, 247, 0.08);
     border-color: rgba(168, 85, 247, 0.25);
 }
+.history-badge.dados {
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.08);
+    border-color: rgba(34, 197, 94, 0.25);
+}
+.history-badge.traducao {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.25);
+}
+.history-badge.imagem {
+    color: #ec4899;
+    background: rgba(236, 72, 153, 0.08);
+    border-color: rgba(236, 72, 153, 0.25);
+}
 .history-time {
     font-size: 11px;
     color: var(--text-dim);

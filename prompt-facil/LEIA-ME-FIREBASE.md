@@ -3,7 +3,7 @@
 O app agora tem tela de login/cadastro e o histórico sincroniza entre
 dispositivos. Isso precisa de um projeto gratuito no Firebase (Google) —
 sem cartão de crédito, plano "Spark" (gratuito) resolve numa boa para
-até 10 usuários.
+até 100 usuários.
 
 ## 1. Criar o projeto
 
@@ -36,7 +36,7 @@ até 10 usuários.
 
 Isso é o que garante que:
 - cada usuário só acessa o **próprio** histórico;
-- o limite de **10 contas gratuitas** é respeitado de verdade (não só na tela).
+- o limite de **100 contas gratuitas** é respeitado de verdade (não só na tela).
 
 Vá em **Firestore Database > Regras** e substitua tudo pelo conteúdo abaixo,
 depois clique em **"Publicar"**:
@@ -46,23 +46,23 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Contador global de contas criadas (usado para o limite de 10 vagas).
+    // Contador global de contas criadas (usado para o limite de 100 vagas).
     // Leitura liberada para qualquer um (mesmo deslogado) só para mostrar
     // "restam X vagas" na tela de login. Escrita só pode SOMAR 1 (novo cadastro,
-    // até no máximo 10) ou SUBTRAIR 1 (exclusão de conta, até no mínimo 0) por vez
+    // até no máximo 100) ou SUBTRAIR 1 (exclusão de conta, até no mínimo 0) por vez
     // — isso é o que impede burlar o limite.
     match /meta/stats {
       allow read: if true;
       allow update: if request.auth != null
                     && (
                          (request.resource.data.userCount == resource.data.userCount + 1
-                          && request.resource.data.userCount <= 10)
+                          && request.resource.data.userCount <= 100)
                          ||
                          (request.resource.data.userCount == resource.data.userCount - 1
                           && request.resource.data.userCount >= 0)
                        );
       allow create: if request.auth != null
-                    && request.resource.data.userCount <= 10;
+                    && request.resource.data.userCount <= 100;
     }
 
     // Perfil do usuário (nome, email, data de criação, consentimento).
@@ -165,7 +165,7 @@ sem isso.
 ## 7. Ativar o App Check (proteção contra bots no cadastro)
 
 Sem isso, um script automatizado poderia criar várias contas em segundos e
-esgotar as 10 vagas gratuitas em poucos segundos. O App Check bloqueia isso
+esgotar as 100 vagas gratuitas em poucos segundos. O App Check bloqueia isso
 de forma invisível (a pessoa real não percebe nada, não precisa clicar em
 nenhum "não sou um robô").
 
@@ -216,9 +216,9 @@ criando uma conta.
 
 ## Limitações que vale saber
 
-- **O limite de 10 contas é reforçado pelas regras do Firestore** (passo 5),
+- **O limite de 100 contas é reforçado pelas regras do Firestore** (passo 5),
   não só pelo código do app — então mesmo que alguém tente burlar editando o
-  JavaScript, o banco de dados recusa a 11ª conta.
+  JavaScript, o banco de dados recusa a 101ª conta.
 - Em um cenário raríssimo de **duas pessoas se cadastrando no exato mesmo
   instante** quando resta 1 vaga, é possível que uma delas veja a tela
   carregar por um instante antes de receber o aviso de "vagas esgotadas".
@@ -229,7 +229,7 @@ criando uma conta.
 - Login e sincronização do histórico **exigem internet**. O gerador de
   prompts em si (categoria, descrição, gerar prompt) continua funcionando
   offline depois do primeiro carregamento, graças ao Service Worker.
-- Quando quiser abrir para mais gente no futuro, basta subir o número `10`
+- Quando quiser abrir para mais gente no futuro, basta subir o número `100`
   nas regras do Firestore (passo 5) e, se o uso crescer muito, migrar do
   plano gratuito "Spark" para o "Blaze" (pago por uso, com uma faixa
   gratuita generosa mesmo assim).

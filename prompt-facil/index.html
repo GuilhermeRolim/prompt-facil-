@@ -241,7 +241,7 @@
 
             <button type="button" id="guestModeBtn" class="guest-mode-link" onclick="continueAsGuest()">Continuar sem criar conta →</button>
 
-            <p class="auth-slots-note" id="authSlotsNote">Acesso gratuito limitado às 10 primeiras contas, enquanto o app está em fase inicial.</p>
+            <p class="auth-slots-note" id="authSlotsNote">Acesso gratuito limitado às 100 primeiras contas, enquanto o app está em fase inicial.</p>
         </div>
     </div>
 
@@ -314,6 +314,9 @@
         <select id="category" onchange="updateDynamicFields()">
             <option value="pesquisa">Pesquisa Geral</option>
             <option value="tecnico">Soluções Técnicas</option>
+            <option value="dados">Análise de Dados</option>
+            <option value="traducao">Tradução e Revisão de Texto</option>
+            <option value="imagem">Prompt para Geração de Imagem</option>
         </select>
 
         <!-- Campo dinâmico apenas para Soluções Técnicas -->
@@ -326,12 +329,44 @@
             <input type="text" id="environment" placeholder="Ex.: Node.js 20, React, produção">
         </div>
 
-        <label for="depthLevel">Nível de Profundidade:</label>
-        <select id="depthLevel">
-            <option value="iniciante">Iniciante (explicações simples, sem jargão)</option>
-            <option value="intermediario" selected>Intermediário (equilíbrio entre clareza e profundidade)</option>
-            <option value="avancado">Avançado (foco técnico, nuances e detalhes especializados)</option>
-        </select>
+        <!-- Campo dinâmico apenas para Análise de Dados -->
+        <div id="dataFields" class="dynamic-field">
+            <label for="dataType">Tipo de Dados (opcional):</label>
+            <input type="text" id="dataType" placeholder="Ex.: vendas mensais, pesquisa de satisfação">
+            <label for="dataFormat">Formato/Ferramenta (opcional):</label>
+            <input type="text" id="dataFormat" placeholder="Ex.: planilha Excel, CSV, banco SQL">
+            <label for="analysisGoal">Objetivo da Análise (opcional):</label>
+            <input type="text" id="analysisGoal" placeholder="Ex.: identificar tendências, prever demanda">
+        </div>
+
+        <!-- Campo dinâmico apenas para Tradução e Revisão de Texto -->
+        <div id="translationFields" class="dynamic-field">
+            <label for="sourceLanguage">Idioma de Origem (opcional):</label>
+            <input type="text" id="sourceLanguage" placeholder="Ex.: inglês">
+            <label for="targetLanguage">Idioma de Destino (opcional):</label>
+            <input type="text" id="targetLanguage" placeholder="Ex.: português">
+            <label for="translationTone">Tom/Formalidade (opcional):</label>
+            <input type="text" id="translationTone" placeholder="Ex.: formal, informal, técnico">
+        </div>
+
+        <!-- Campo dinâmico apenas para Prompt de Geração de Imagem -->
+        <div id="imageFields" class="dynamic-field">
+            <label for="imageStyle">Estilo Visual (opcional):</label>
+            <input type="text" id="imageStyle" placeholder="Ex.: fotorrealista, aquarela, pixel art, 3D render">
+            <label for="imageAspectRatio">Proporção/Formato (opcional):</label>
+            <input type="text" id="imageAspectRatio" placeholder="Ex.: quadrado 1:1, paisagem 16:9, retrato 9:16">
+            <label for="imageAvoid">Elementos a Evitar (opcional):</label>
+            <input type="text" id="imageAvoid" placeholder="Ex.: texto, marca d'água, pessoas">
+        </div>
+
+        <div id="depthLevelField">
+            <label for="depthLevel">Nível de Profundidade:</label>
+            <select id="depthLevel">
+                <option value="iniciante">Iniciante (explicações simples, sem jargão)</option>
+                <option value="intermediario" selected>Intermediário (equilíbrio entre clareza e profundidade)</option>
+                <option value="avancado">Avançado (foco técnico, nuances e detalhes especializados)</option>
+            </select>
+        </div>
 
         <div class="textarea-wrapper">
             <label for="description">Descrição da Necessidade:</label>

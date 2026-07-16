@@ -521,12 +521,26 @@
         // Função para mostrar/ocultar campos dinâmicos com base na categoria
         function updateDynamicFields() {
             const category = document.getElementById('category').value;
-            // Esconde o campo dinâmico
+            // Esconde todos os blocos de campos dinâmicos por categoria
             document.getElementById('techFields').style.display = 'none';
-            // Mostra apenas para "tecnico"
+            document.getElementById('dataFields').style.display = 'none';
+            document.getElementById('translationFields').style.display = 'none';
+            document.getElementById('imageFields').style.display = 'none';
+
             if (category === 'tecnico') {
                 document.getElementById('techFields').style.display = 'block';
+            } else if (category === 'dados') {
+                document.getElementById('dataFields').style.display = 'block';
+            } else if (category === 'traducao') {
+                document.getElementById('translationFields').style.display = 'block';
+            } else if (category === 'imagem') {
+                document.getElementById('imageFields').style.display = 'block';
             }
+
+            // Nível de profundidade não se aplica a tradução (tem campo de tom próprio)
+            // nem a geração de imagem (não é uma resposta explicativa).
+            const depthField = document.getElementById('depthLevelField');
+            depthField.style.display = (category === 'traducao' || category === 'imagem') ? 'none' : 'block';
         }
 
         // Chamada inicial para campos dinâmicos
@@ -552,6 +566,21 @@
                 const problemType = document.getElementById('problemType').value.trim();
                 const environment = document.getElementById('environment').value.trim();
                 prompt = buildTechnicalPrompt(description, details, depthLevel, programmingLanguage, problemType, environment);
+            } else if (category === 'dados') {
+                const dataType = document.getElementById('dataType').value.trim();
+                const dataFormat = document.getElementById('dataFormat').value.trim();
+                const analysisGoal = document.getElementById('analysisGoal').value.trim();
+                prompt = buildDataAnalysisPrompt(description, details, depthLevel, dataType, dataFormat, analysisGoal);
+            } else if (category === 'traducao') {
+                const sourceLanguage = document.getElementById('sourceLanguage').value.trim();
+                const targetLanguage = document.getElementById('targetLanguage').value.trim();
+                const translationTone = document.getElementById('translationTone').value.trim();
+                prompt = buildTranslationPrompt(description, details, sourceLanguage, targetLanguage, translationTone);
+            } else if (category === 'imagem') {
+                const imageStyle = document.getElementById('imageStyle').value.trim();
+                const imageAspectRatio = document.getElementById('imageAspectRatio').value.trim();
+                const imageAvoid = document.getElementById('imageAvoid').value.trim();
+                prompt = buildImagePrompt(description, details, imageStyle, imageAspectRatio, imageAvoid);
             }
 
             const promptField = document.getElementById('promptText');
@@ -904,6 +933,30 @@
             return div.innerHTML;
         }
 
+        // ---------- Badge de categoria (histórico, favoritos, links, biblioteca) ----------
+        // Mapa único de categoria -> {label, cssClass}, usado em todo lugar que renderiza
+        // o "selinho" colorido, e também pra reconstruir a categoria a partir do badge
+        // renderizado (ver importSharedPrompt) via atributo data-category — em vez de
+        // comparar o texto do label, que quebraria com facilidade ao adicionar categorias.
+        const CATEGORY_BADGES = {
+            pesquisa: { label: 'Pesquisa', cssClass: 'history-badge' },
+            tecnico: { label: 'Técnico', cssClass: 'history-badge tecnico' },
+            dados: { label: 'Dados', cssClass: 'history-badge dados' },
+            traducao: { label: 'Tradução', cssClass: 'history-badge traducao' },
+            imagem: { label: 'Imagem', cssClass: 'history-badge imagem' }
+        };
+
+        function getCategoryBadge(category) {
+            return CATEGORY_BADGES[category] || CATEGORY_BADGES.pesquisa;
+        }
+
+        // Retorna o HTML pronto do badge, já com data-category (usado para reconstruir
+        // a categoria em importSharedPrompt sem depender do texto exibido).
+        function categoryBadgeHtml(category) {
+            const badge = getCategoryBadge(category);
+            return `<span class="${badge.cssClass}" data-category="${category}">${badge.label}</span>`;
+        }
+
         function renderHistoryList() {
             const container = document.getElementById('historyList');
             const clearRow = document.getElementById('historyClearRow');
@@ -916,8 +969,7 @@
 
             clearRow.style.display = 'block';
             container.innerHTML = historyCache.map((item) => {
-                const badgeClass = item.category === 'tecnico' ? 'history-badge tecnico' : 'history-badge';
-                const badgeLabel = item.category === 'tecnico' ? 'Técnico' : 'Pesquisa';
+                const categoryBadge = getCategoryBadge(item.category);
                 const shortDesc = (item.description || '').length > 140
                     ? item.description.slice(0, 140) + '…'
                     : (item.description || '');
@@ -926,7 +978,7 @@
                 return `
                     <div class="history-item" data-id="${item.id}">
                         <div class="history-item-top">
-                            <span class="${badgeClass}">${badgeLabel}</span>
+                            <span class="${categoryBadge.cssClass}" data-category="${item.category}">${categoryBadge.label}</span>
                             <button type="button" class="history-fav-btn${isFavorited ? ' is-favorited' : ''}" data-action="favorite" data-id="${item.id}" title="${starTitle}" aria-label="${starTitle}">${isFavorited ? '★' : '☆'}</button>
                             <span class="history-time">${formatHistoryDate(item.createdAt)}</span>
                         </div>
@@ -1122,15 +1174,14 @@
 
             clearRow.style.display = 'block';
             container.innerHTML = favoritesCache.map((item) => {
-                const badgeClass = item.category === 'tecnico' ? 'history-badge tecnico' : 'history-badge';
-                const badgeLabel = item.category === 'tecnico' ? 'Técnico' : 'Pesquisa';
+                const categoryBadge = getCategoryBadge(item.category);
                 const shortDesc = (item.description || '').length > 140
                     ? item.description.slice(0, 140) + '…'
                     : (item.description || '');
                 return `
                     <div class="history-item" data-id="${item.id}">
                         <div class="history-item-top">
-                            <span class="${badgeClass}">${badgeLabel}</span>
+                            <span class="${categoryBadge.cssClass}" data-category="${item.category}">${categoryBadge.label}</span>
                             <span class="history-badge favorite">★ Favorito</span>
                             <span class="history-time">${formatHistoryDate(item.createdAt)}</span>
                         </div>
@@ -1314,8 +1365,7 @@
                 return;
             }
             container.innerHTML = mySharesCache.map((item) => {
-                const badgeClass = item.category === 'tecnico' ? 'history-badge tecnico' : 'history-badge';
-                const badgeLabel = item.category === 'tecnico' ? 'Técnico' : 'Pesquisa';
+                const categoryBadge = getCategoryBadge(item.category);
                 const shortDesc = (item.description || '').length > 140
                     ? item.description.slice(0, 140) + '…'
                     : (item.description || '');
@@ -1323,7 +1373,7 @@
                 return `
                     <div class="history-item" data-id="${item.id}">
                         <div class="history-item-top">
-                            <span class="${badgeClass}">${badgeLabel}</span>
+                            <span class="${categoryBadge.cssClass}" data-category="${item.category}">${categoryBadge.label}</span>
                             <span class="history-time">${formatHistoryDate(item.createdAt)}</span>
                         </div>
                         <div class="history-desc">${escapeHtml(shortDesc)}</div>
@@ -1392,11 +1442,10 @@
         }
 
         function renderSharedPromptBody(shareId, data) {
-            const badgeClass = data.category === 'tecnico' ? 'history-badge tecnico' : 'history-badge';
-            const badgeLabel = data.category === 'tecnico' ? 'Técnico' : 'Pesquisa';
+            const categoryBadge = getCategoryBadge(data.category);
             document.getElementById('sharedPromptBody').innerHTML = `
                 <div class="history-item-top">
-                    <span class="${badgeClass}">${badgeLabel}</span>
+                    <span class="${categoryBadge.cssClass}" data-category="${data.category}">${categoryBadge.label}</span>
                     <span class="history-time">${formatHistoryDate(data.createdAt)}</span>
                 </div>
                 <p class="shared-prompt-owner">Prompt compartilhado com você — importe pra editar e continuar usando na sua conta.</p>
@@ -1425,7 +1474,7 @@
             // Relê a categoria/descrição a partir do painel renderizado (evita guardar estado à parte)
             const descEl = document.querySelector('#sharedPromptBody .shared-prompt-desc');
             const badgeEl = document.querySelector('#sharedPromptBody .history-badge');
-            const category = badgeEl && badgeEl.textContent.trim() === 'Técnico' ? 'tecnico' : 'pesquisa';
+            const category = (badgeEl && badgeEl.dataset.category) || 'pesquisa';
             saveToHistory({
                 category,
                 description: descEl ? descEl.textContent : '',
@@ -1674,8 +1723,7 @@
             }
 
             container.innerHTML = items.map((item) => {
-                const badgeClass = item.category === 'tecnico' ? 'history-badge tecnico' : 'history-badge';
-                const badgeLabel = item.category === 'tecnico' ? 'Técnico' : 'Pesquisa';
+                const categoryBadge = getCategoryBadge(item.category);
                 const shortDesc = (item.description || '').length > 140
                     ? item.description.slice(0, 140) + '…'
                     : (item.description || '');
@@ -1688,7 +1736,7 @@
                 return `
                     <div class="history-item" data-id="${item.id}">
                         <div class="history-item-top">
-                            <span class="${badgeClass}">${badgeLabel}</span>
+                            <span class="${categoryBadge.cssClass}" data-category="${item.category}">${categoryBadge.label}</span>
                             <span class="rating-summary">${formatRatingSummary(item)}</span>
                         </div>
                         ${!isMineTab ? `<p class="history-owner">Publicado por ${escapeHtml(item.ownerName || 'alguém')}</p>` : ''}
@@ -1774,7 +1822,7 @@
         // ================================
         // Autenticação (login / cadastro / logout)
         // ================================
-        const FREE_SEAT_LIMIT = 10;
+        const FREE_SEAT_LIMIT = 100;
 
         function switchAuthTab(which) {
             const isLogin = which === 'login';
@@ -1933,10 +1981,10 @@
                     console.error('Não foi possível enviar o email de verificação:', err);
                 });
 
-                // Cria o perfil e reserva 1 das 10 vagas gratuitas de forma atômica.
+                // Cria o perfil e reserva 1 das FREE_SEAT_LIMIT vagas gratuitas de forma atômica.
                 // As regras de segurança do Firestore (veja LEIA-ME-FIREBASE.md) validam
-                // que o contador nunca ultrapassa 10 — mesmo se dois cadastros acontecerem
-                // ao mesmo tempo, só um deles consegue confirmar a transação.
+                // que o contador nunca ultrapassa FREE_SEAT_LIMIT — mesmo se dois cadastros
+                // acontecerem ao mesmo tempo, só um deles consegue confirmar a transação.
                 const statsRef = db.collection('meta').doc('stats');
                 await db.runTransaction(async (tx) => {
                     const statsDoc = await tx.get(statsRef);
@@ -1955,7 +2003,7 @@
                 // A troca de tela acontece no listener onAuthStateChanged, mais abaixo.
             } catch (err) {
                 if (err && (err.message === 'LIMITE_ATINGIDO' || err.code === 'permission-denied')) {
-                    showAuthError('As 10 vagas gratuitas já foram todas preenchidas. Tente novamente mais tarde.');
+                    showAuthError(`As ${FREE_SEAT_LIMIT} vagas gratuitas já foram todas preenchidas. Tente novamente mais tarde.`);
                 } else {
                     showAuthError(translateAuthError(err));
                 }
@@ -2074,7 +2122,7 @@
                 batch.delete(db.collection('users').doc(user.uid));
                 await batch.commit();
 
-                // 2. Libera a vaga (decrementa o contador das 10 vagas gratuitas).
+                // 2. Libera a vaga (decrementa o contador das FREE_SEAT_LIMIT vagas gratuitas).
                 const statsRef = db.collection('meta').doc('stats');
                 await db.runTransaction(async (tx) => {
                     const statsDoc = await tx.get(statsRef);

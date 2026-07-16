@@ -22,6 +22,9 @@
         root.depthInstructions = exportsObj.depthInstructions;
         root.buildResearchPrompt = exportsObj.buildResearchPrompt;
         root.buildTechnicalPrompt = exportsObj.buildTechnicalPrompt;
+        root.buildDataAnalysisPrompt = exportsObj.buildDataAnalysisPrompt;
+        root.buildTranslationPrompt = exportsObj.buildTranslationPrompt;
+        root.buildImagePrompt = exportsObj.buildImagePrompt;
     }
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : null), function () {
 
@@ -94,5 +97,105 @@
         return lines.join('\n');
     }
 
-    return { depthInstructions, buildResearchPrompt, buildTechnicalPrompt };
+    function buildDataAnalysisPrompt(description, details, depthLevel, dataType, dataFormat, analysisGoal) {
+        const lines = [];
+        lines.push(`Aja como um analista de dados sênior. Preciso de ajuda para analisar o seguinte: "${description}".`);
+
+        const contextItems = [];
+        if (dataType) contextItems.push(`Tipo de dados: ${dataType}`);
+        if (dataFormat) contextItems.push(`Formato/ferramenta: ${dataFormat}`);
+        if (analysisGoal) contextItems.push(`Objetivo da análise: ${analysisGoal}`);
+        if (details) contextItems.push(`Detalhes adicionais: ${details}`);
+        if (contextItems.length > 0) {
+            lines.push('');
+            lines.push('Contexto fornecido por mim:');
+            contextItems.forEach(item => lines.push(`- ${item}`));
+        }
+
+        lines.push('');
+        lines.push('Se faltar alguma informação essencial sobre os dados (ex.: volume, período, colunas disponíveis) para uma boa análise, pergunte antes de assumir e responder.');
+        lines.push('');
+        lines.push('Estruture sua resposta da seguinte forma:');
+        lines.push('1. Entendimento do problema e dos dados disponíveis (ou que tipo de dados seriam necessários, se eu não os tiver descrito em detalhe).');
+        lines.push('2. Abordagem e metodologia de análise recomendada, com justificativa.');
+        lines.push('3. Passo a passo de como realizar a análise, incluindo fórmulas, consultas (SQL) ou código quando fizer sentido.');
+        lines.push('4. Principais métricas e indicadores a observar.');
+        lines.push('5. Como interpretar e visualizar os resultados (tipos de gráfico mais adequados).');
+        lines.push('6. Possíveis armadilhas, vieses ou limitações dos dados que podem distorcer a análise.');
+        lines.push('7. Recomendações práticas e acionáveis com base nos resultados esperados.');
+        lines.push('');
+        lines.push('Diretrizes gerais para a resposta:');
+        lines.push(`- ${depthInstructions[depthLevel]}`);
+        lines.push('- Use tabelas, listas e subtítulos para organizar números e comparações.');
+        lines.push('- Deixe claro quando uma recomendação depende de uma suposição sobre os dados que não foi confirmada por mim.');
+        return lines.join('\n');
+    }
+
+    function buildTranslationPrompt(description, details, sourceLanguage, targetLanguage, tone) {
+        const lines = [];
+        const langPart = (sourceLanguage && targetLanguage)
+            ? ` especialista em tradução de ${sourceLanguage} para ${targetLanguage}`
+            : (targetLanguage ? ` especialista em tradução para ${targetLanguage}` : '');
+        lines.push(`Aja como um tradutor(a) e revisor(a) de texto profissional${langPart}. Preciso de ajuda com o seguinte texto/tarefa: "${description}".`);
+
+        const contextItems = [];
+        if (sourceLanguage) contextItems.push(`Idioma de origem: ${sourceLanguage}`);
+        if (targetLanguage) contextItems.push(`Idioma de destino: ${targetLanguage}`);
+        if (tone) contextItems.push(`Tom/formalidade desejada: ${tone}`);
+        if (details) contextItems.push(`Detalhes adicionais: ${details}`);
+        if (contextItems.length > 0) {
+            lines.push('');
+            lines.push('Contexto fornecido por mim:');
+            contextItems.forEach(item => lines.push(`- ${item}`));
+        }
+
+        lines.push('');
+        lines.push('Se faltar alguma informação essencial (por exemplo, o idioma de destino, o público-alvo do texto ou se é tradução livre ou literal), pergunte antes de assumir e responder.');
+        lines.push('');
+        lines.push('Estruture sua resposta da seguinte forma:');
+        lines.push('1. Texto traduzido e/ou revisado na íntegra, preservando o sentido, o tom e a formatação original sempre que possível.');
+        lines.push('2. Explicação das principais escolhas de tradução ou adaptação (expressões idiomáticas, termos técnicos, referências culturais).');
+        lines.push('3. Erros gramaticais, ortográficos ou de estilo identificados e corrigidos, se aplicável.');
+        lines.push('4. Sugestões alternativas para trechos ambíguos ou que possam ser melhorados.');
+        lines.push('5. Observações sobre tom, formalidade e adequação ao público-alvo.');
+        lines.push('');
+        lines.push('Diretrizes gerais para a resposta:');
+        lines.push('- Mantenha a naturalidade no idioma de destino, evitando traduções literais que soem artificiais.');
+        lines.push('- Sinalize claramente quando um termo não tiver equivalente direto e explique a solução escolhida.');
+        lines.push('- Use formatação (negrito, listas) apenas se ajudar a comparar original e tradução.');
+        return lines.join('\n');
+    }
+
+    function buildImagePrompt(description, details, style, aspectRatio, avoid) {
+        const lines = [];
+        lines.push('Prompt para geração de imagem:');
+        lines.push('');
+        lines.push(`Cena principal: ${description}.`);
+        if (details) {
+            lines.push(`Detalhes adicionais: ${details}.`);
+        }
+        lines.push(`Estilo visual: ${style ? style : 'escolha o estilo (ex.: fotorrealista, ilustração digital, aquarela, 3D render) que melhor combine com a cena descrita'}.`);
+        lines.push('Composição: defina enquadramento, plano (close-up, plano aberto, etc.) e ponto de vista coerentes com a cena.');
+        lines.push('Iluminação e atmosfera: escolha uma iluminação (natural, dramática, suave, neon, etc.) que reforce o clima da cena.');
+        lines.push('Paleta de cores: defina cores predominantes que combinem com o estilo e a atmosfera descritos.');
+        if (aspectRatio) {
+            lines.push(`Proporção/formato: ${aspectRatio}.`);
+        }
+        if (avoid) {
+            lines.push(`Evitar: ${avoid}.`);
+        }
+        lines.push('Qualidade: alta riqueza de detalhes, nítido, sem elementos borrados, distorcidos ou anatomicamente incorretos.');
+        lines.push('');
+        lines.push('Dica: cole este prompt em geradores de imagem como Midjourney, DALL-E, Gemini ou Stable Diffusion. Alguns aceitam parâmetros extras (ex.: --ar para proporção no Midjourney) que podem ser adicionados manualmente ao final.');
+        return lines.join('\n');
+    }
+
+    return {
+        depthInstructions,
+        buildResearchPrompt,
+        buildTechnicalPrompt,
+        buildDataAnalysisPrompt,
+        buildTranslationPrompt,
+        buildImagePrompt
+    };
 });
