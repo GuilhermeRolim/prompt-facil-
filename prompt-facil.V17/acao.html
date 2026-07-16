@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Prompt Fácil</title>
+    <link rel="icon" href="icon-192-v2.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js" defer></script>
+    <script src="firebase-config.js" defer></script>
+    <style>
+        :root {
+            --bg-deep: #060815;
+            --surface-solid: #0e1424;
+            --border-soft: rgba(140, 170, 255, 0.16);
+            --cyan: #00e5ff;
+            --violet: #a855f7;
+            --mint: #39ffb0;
+            --danger: #ff5c7a;
+            --text-primary: #e8ecf7;
+            --text-secondary: #8b95b3;
+            --text-dim: #5c6484;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            font-family: 'Inter', sans-serif;
+            background:
+                radial-gradient(circle at 15% 10%, rgba(0, 229, 255, 0.10), transparent 45%),
+                radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.10), transparent 45%),
+                var(--bg-deep);
+            color: var(--text-primary);
+        }
+        .card {
+            width: 100%;
+            max-width: 440px;
+            background: var(--surface-solid);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-lg);
+            padding: 40px 36px;
+            text-align: center;
+        }
+        .logo {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 10px 40px rgba(0, 229, 255, 0.2);
+        }
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 22px;
+            margin: 0 0 6px;
+            background: linear-gradient(120deg, #ffffff 10%, var(--cyan) 55%, var(--violet) 95%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        #statusIcon { font-size: 40px; margin-bottom: 10px; line-height: 1; }
+        #statusMessage {
+            color: var(--text-secondary);
+            font-size: 14.5px;
+            line-height: 1.6;
+            margin: 0 0 22px;
+        }
+        #statusMessage.is-error { color: var(--danger); }
+        #statusMessage.is-success { color: var(--mint); }
+        label {
+            display: block;
+            text-align: left;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin: 14px 0 8px;
+        }
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(6, 9, 20, 0.6);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--cyan);
+        }
+        button, a.btn {
+            display: inline-block;
+            width: 100%;
+            margin-top: 20px;
+            padding: 13px;
+            background: linear-gradient(120deg, var(--cyan) 0%, var(--violet) 100%);
+            color: #060815;
+            border: none;
+            border-radius: var(--radius-md);
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        #formArea, #actionArea { display: none; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <img src="icon-512-v2.png" class="logo" alt="">
+        <h1>Prompt Fácil</h1>
+
+        <div id="loadingArea">
+            <div id="statusIcon">⏳</div>
+            <p id="statusMessage">Verificando...</p>
+        </div>
+
+        <div id="formArea">
+            <p id="formMessage" style="color: var(--text-secondary); font-size: 14.5px; margin: 0;">Escolha sua nova senha:</p>
+            <label for="newPassword">Nova senha</label>
+            <input type="password" id="newPassword" placeholder="Mínimo 6 caracteres">
+            <label for="newPasswordConfirm">Confirmar nova senha</label>
+            <input type="password" id="newPasswordConfirm" placeholder="Repita a senha">
+            <button type="button" id="resetSubmitBtn" onclick="submitNewPassword()">Redefinir senha</button>
+        </div>
+
+        <div id="actionArea">
+            <a class="btn" href="index.html">Voltar ao Prompt Fácil</a>
+        </div>
+    </div>
+
+    <script src="app-action-handler.js" defer></script>
+</body>
+</html>

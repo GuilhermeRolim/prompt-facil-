@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, follow">
+    <title>Política de Privacidade — Prompt Fácil</title>
+    <link rel="icon" href="icon-192-v2.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #060815;
+            --surface-solid: #0e1424;
+            --border-soft: rgba(140, 170, 255, 0.16);
+            --cyan: #00e5ff;
+            --violet: #a855f7;
+            --text-primary: #e8ecf7;
+            --text-secondary: #8b95b3;
+            --text-dim: #5c6484;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 48px 20px 80px;
+            font-family: 'Inter', sans-serif;
+            background:
+                radial-gradient(circle at 15% 10%, rgba(0, 229, 255, 0.10), transparent 45%),
+                radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.10), transparent 45%),
+                var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.65;
+        }
+        .doc {
+            max-width: 720px;
+            margin: 0 auto;
+            background: var(--surface-solid);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-lg);
+            padding: 44px 40px;
+        }
+        a.back-link {
+            display: inline-block;
+            margin-bottom: 24px;
+            color: var(--cyan);
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+        a.back-link:hover { text-decoration: underline; }
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 28px;
+            margin: 0 0 6px;
+            background: linear-gradient(120deg, #ffffff 10%, var(--cyan) 55%, var(--violet) 95%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .updated {
+            color: var(--text-dim);
+            font-size: 13px;
+            margin-bottom: 32px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 17px;
+            color: var(--text-primary);
+            margin: 32px 0 10px;
+        }
+        p, li { color: var(--text-secondary); font-size: 14.5px; }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 6px; }
+        strong { color: var(--text-primary); }
+        code {
+            background: rgba(0, 229, 255, 0.08);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--cyan);
+        }
+        a { color: var(--cyan); }
+        /* Mesmo scroll fino com gradiente ciano/violeta usado no restante do app */
+        html {
+            scrollbar-width: thin;
+            scrollbar-color: var(--cyan) rgba(255, 255, 255, 0.04);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--cyan), var(--violet));
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--cyan);
+        }
+    </style>
+</head>
+<body>
+    <div class="doc">
+        <a class="back-link" href="index.html" id="backLink">← Voltar ao Prompt Fácil</a>
+        <h1>Política de Privacidade</h1>
+        <p class="updated">Última atualização: julho de 2026</p>
+
+        <p>Esta política explica, de forma direta, quais dados o <strong>Prompt Fácil</strong> coleta,
+        para que servem e quais direitos você tem sobre eles, em conformidade com a
+        Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018).</p>
+
+        <h2>1. Quais dados coletamos</h2>
+        <p>Ao criar uma conta, coletamos:</p>
+        <ul>
+            <li><strong>Nome completo</strong> — usado apenas para te identificar dentro do app.</li>
+            <li><strong>Email</strong> — usado para login e para recuperação de senha.</li>
+            <li><strong>Senha</strong> — armazenada de forma criptografada pelo Firebase Authentication; nem nós, nem o Firebase, temos acesso a ela em texto puro.</li>
+        </ul>
+        <p>Ao usar o gerador de prompts com uma conta criada, também guardamos:</p>
+        <ul>
+            <li>O <strong>histórico dos prompts gerados</strong> por você (categoria, descrição e o texto do prompt), para que fique disponível em qualquer aparelho que você entrar com a mesma conta.</li>
+        </ul>
+        <p>Se você usar o modo <strong>"Continuar sem criar conta"</strong>, nenhum dado pessoal é coletado ou armazenado — o app funciona localmente, sem histórico sincronizado.</p>
+
+        <h2>2. Por que coletamos esses dados</h2>
+        <ul>
+            <li>Permitir login e manter sua conta segura.</li>
+            <li>Sincronizar seu histórico de prompts entre dispositivos.</li>
+            <li>Enviar emails operacionais (confirmação de conta, redefinição de senha) — nunca enviamos marketing sem seu consentimento explícito.</li>
+        </ul>
+        <p>Se algo der errado técnicamente durante o uso (um erro no app), registramos automaticamente
+        a mensagem do erro, a página em que ocorreu e o navegador usado — para conseguirmos corrigir
+        problemas rapidamente. Esse registro <strong>não</strong> inclui sua senha nem o conteúdo dos
+        seus prompts.</p>
+
+        <h2>3. Com quem seus dados são compartilhados</h2>
+        <p>Usamos o <strong>Firebase</strong> (Google LLC) como infraestrutura de autenticação e banco de dados.
+        Isso significa que seus dados são processados em servidores do Google, o que pode incluir
+        transferência internacional de dados. O Google atua como nosso <strong>operador de dados</strong>
+        e segue os próprios termos de proteção de dados do Firebase.
+        Não vendemos, alugamos ou compartilhamos seus dados com terceiros para fins de publicidade.</p>
+
+        <h2>4. Seus direitos (LGPD, Art. 18)</h2>
+        <p>Você pode, a qualquer momento:</p>
+        <ul>
+            <li><strong>Acessar</strong> os dados que temos sobre você.</li>
+            <li><strong>Corrigir</strong> dados incompletos ou desatualizados.</li>
+            <li><strong>Excluir sua conta e todos os dados associados</strong> — direto no app, na opção
+                "Excluir minha conta", disponível após o login. Essa ação é imediata e não pode ser desfeita.</li>
+            <li><strong>Revogar seu consentimento</strong> a qualquer momento, excluindo sua conta.</li>
+        </ul>
+
+        <h2>5. Por quanto tempo guardamos seus dados</h2>
+        <p>Enquanto sua conta existir. Ao excluir sua conta, seu perfil e todo o histórico de prompts
+        são apagados permanentemente do banco de dados.</p>
+
+        <h2>6. Segurança</h2>
+        <p>O acesso aos seus dados é protegido por regras de segurança do Firestore que garantem que
+        <strong>apenas você</strong> pode ler ou modificar o seu próprio histórico e perfil. O tráfego entre
+        seu navegador e nossos servidores é criptografado (HTTPS).</p>
+
+        <h2>7. Contato</h2>
+        <p>Dúvidas sobre esta política ou sobre seus dados? Escreva para
+        <a href="mailto:promptez2026@gmail.com">promptez2026@gmail.com</a>.</p>
+        <!-- Email de contato configurado. -->
+    </div>
+    <script>
+        // Quando esta página é aberta dentro do painel sobreposto do app (iframe),
+        // o link "Voltar" fecha o painel em vez de navegar para outra tela.
+        if (window.self !== window.top) {
+            document.getElementById('backLink').addEventListener('click', function (e) {
+                e.preventDefault();
+                window.parent.postMessage('closePrivacyModal', window.location.origin);
+            });
+        }
+    </script>
+</body>
+</html>
