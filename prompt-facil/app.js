@@ -444,7 +444,11 @@
             profession.templates.forEach((tpl, index) => {
                 const opt = document.createElement('option');
                 opt.value = String(index);
-                opt.textContent = tpl.label;
+                // No plano grátis, só o 1º modelo de cada profissão fica liberado —
+                // os demais aparecem na lista (pra mostrar o que existe) mas com
+                // cadeado, e handleTemplateSelected() bloqueia o uso deles.
+                const bloqueado = index > 0 && !isPremium();
+                opt.textContent = bloqueado ? `🔒 ${tpl.label} (Premium)` : tpl.label;
                 templateSelect.appendChild(opt);
             });
 
@@ -461,6 +465,13 @@
             if (!profession || templateIndex === '') return;
             const tpl = profession.templates[Number(templateIndex)];
             if (!tpl) return;
+
+            if (Number(templateIndex) > 0 && !isPremium()) {
+                showErrorToast('🔒 esse modelo é premium — assinaturas abrem em breve_');
+                document.getElementById('templateSelect').value = '';
+                refreshCustomSelect('templateSelect');
+                return;
+            }
 
             document.getElementById('category').value = tpl.category;
             refreshCustomSelect('category');
@@ -804,6 +815,54 @@
             document.getElementById('updateLaterBtn').onclick = () => {
                 banner.classList.remove('show');
             };
+        }
+
+        // ================================
+        // Plano da conta (grátis / premium) — feature nova
+        // ================================
+        // O campo "plano" mora no documento /users/{uid} e SÓ pode ser alterado
+        // manualmente pelo painel do Firebase (ou, no futuro, pela Cloud Function
+        // que confirma o pagamento) — as regras do Firestore bloqueiam o app de
+        // escrever nesse campo diretamente, então dar upgrade editando o
+        // JavaScript do navegador não funciona.
+        let currentPlano = 'gratis';
+        let planoUnsubscribe = null;
+
+        function isPremium() {
+            return currentPlano === 'premium';
+        }
+
+        function startPlanoListener(uid) {
+            stopPlanoListener();
+            planoUnsubscribe = db.collection('users').doc(uid)
+                .onSnapshot((doc) => {
+                    const novoPlano = (doc.exists && doc.data().plano === 'premium') ? 'premium' : 'gratis';
+                    const mudou = novoPlano !== currentPlano;
+                    currentPlano = novoPlano;
+                    updatePlanoBadge();
+                    // Se o plano mudou (ex.: alguém acabou de virar premium), reflete
+                    // isso na lista de modelos por profissão, que depende do plano.
+                    if (mudou) updateTemplateOptions();
+                }, (err) => {
+                    console.error('Não foi possível verificar o plano da conta:', err);
+                });
+        }
+
+        function stopPlanoListener() {
+            if (planoUnsubscribe) {
+                planoUnsubscribe();
+                planoUnsubscribe = null;
+            }
+            currentPlano = 'gratis';
+            updatePlanoBadge();
+        }
+
+        function updatePlanoBadge() {
+            const badge = document.getElementById('planoBadge');
+            if (!badge) return;
+            badge.hidden = false;
+            badge.textContent = isPremium() ? 'Premium' : 'Grátis';
+            badge.classList.toggle('is-premium', isPremium());
         }
 
         // ================================
@@ -1996,6 +2055,7 @@
                     tx.set(db.collection('users').doc(createdUser.uid), {
                         name,
                         email,
+                        plano: 'gratis',
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                         privacyPolicyAcceptedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
@@ -2043,10 +2103,13 @@
                 startHistoryListener(user.uid);
                 startFavoritesListener(user.uid);
                 startMySharesListener(user.uid);
+                startPlanoListener(user.uid);
                 updateSyncStatus();
             } else {
                 // Modo visitante: sem conta, sem histórico/favoritos/links/biblioteca sincronizados, nada pra excluir.
                 sessionStorage.setItem(GUEST_FLAG_KEY, '1');
+                document.getElementById('planoBadge').hidden = true;
+                stopPlanoListener();
                 stopHistoryListener();
                 stopFavoritesListener();
                 stopMySharesListener();

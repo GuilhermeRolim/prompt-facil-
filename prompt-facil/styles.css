@@ -1882,3 +1882,20 @@
     box-shadow: none;
     filter: none;
 }
+.plano-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid var(--border-soft);
+    color: var(--text-secondary);
+    background: var(--surface);
+    margin-left: 8px;
+}
+.plano-badge.is-premium {
+    color: var(--on-accent);
+    background: linear-gradient(90deg, var(--violet), var(--cyan));
+    border-color: transparent;
+}

@@ -67,8 +67,18 @@ service cloud.firestore {
 
     // Perfil do usuário (nome, email, data de criação, consentimento).
     match /users/{uid} {
-      allow create: if request.auth != null && request.auth.uid == uid;
-      allow read, update, delete: if request.auth != null && request.auth.uid == uid;
+      // Conta sempre nasce no plano grátis — o próprio app define isso na hora
+      // do cadastro (não dá pra criar a conta já em "premium" direto pelo app).
+      allow create: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.plano == 'gratis';
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      // Atualização normal do perfil (nome etc.) é livre, MAS o campo "plano"
+      // não pode mudar por aqui — só manualmente pelo Console do Firebase (ou,
+      // quando o pagamento estiver pronto, pela Cloud Function que confirma o
+      // Pix, que usa o Admin SDK e ignora estas regras). Isso é o que impede
+      // alguém de virar "premium" só editando o JavaScript do navegador.
+      allow update: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.plano == resource.data.plano;
 
       // Histórico de prompts do usuário — só o próprio dono lê/escreve/apaga.
       match /prompts/{promptId} {
@@ -207,6 +217,22 @@ personalizada (`acao.html`) — falta só apontar o Firebase pra ela:
 
 Depois disso, os emails de confirmação e redefinição de senha vão abrir a tela
 com o visual do Prompt Fácil, em vez da tela branca padrão do Firebase.
+
+## 9. Liberar o plano premium na mão (para os testadores de confiança)
+
+O pagamento ainda não está automatizado — por enquanto, toda conta nova nasce
+no plano `gratis`. Pra liberar premium de graça pra alguém (ex.: os primeiros
+testadores):
+
+1. No **Firebase Console**, vá em **Build > Firestore Database > Dados**.
+2. Abra a coleção `users` e ache o documento da pessoa (o ID é o UID dela —
+   dá pra confirmar em **Authentication > Users**, buscando pelo email).
+3. Edite o campo `plano`, trocando o valor de `gratis` para `premium`.
+4. Salve. O app da pessoa atualiza sozinho, na hora, sem precisar sair e
+   entrar de novo (ele fica "escutando" esse campo em tempo real).
+
+Pra tirar o acesso depois (ex.: reverter um teste), é só voltar o campo pra
+`gratis` do mesmo jeito.
 
 ## Pronto!
 
