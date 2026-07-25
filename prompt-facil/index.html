@@ -52,6 +52,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-check-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-functions-compat.js" defer></script>
     <script src="firebase-config.js" defer></script>
 </head>
 <body>
@@ -130,6 +131,20 @@
             <div id="favoritesList" class="history-list"></div>
             <div id="favoritesClearRow" class="history-clear-row" style="display:none;">
                 <button type="button" id="favoritesClearBtn" class="history-clear-btn">Remover todos os favoritos</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Painel "Assinar Premium" — QR Code Pix da assinatura (feature nova) -->
+    <div id="assinarOverlay" role="dialog" aria-modal="true" aria-labelledby="assinarTitle">
+        <div id="assinarPanel">
+            <div class="terminal-bar history-header">
+                <span></span><span></span><span></span>
+                <span class="terminal-label" id="assinarTitle" style="flex:1;">assinatura_premium.txt</span>
+                <button type="button" id="assinarClose" class="history-close-btn" aria-label="Fechar tela de assinatura">✕</button>
+            </div>
+            <div id="assinarConteudo" class="assinar-conteudo">
+                <p>Carregando...</p>
             </div>
         </div>
     </div>
@@ -268,6 +283,9 @@
                     </button>
                     <button type="button" id="publicLibraryTrigger" class="app-menu-item" role="menuitem" aria-haspopup="dialog" aria-label="Abrir biblioteca pública de prompts">
                         <span>🌐</span> Biblioteca
+                    </button>
+                    <button type="button" id="assinarTrigger" class="app-menu-item" role="menuitem" aria-haspopup="dialog" aria-label="Assinar o plano premium" hidden>
+                        <span>💎</span> Assinar Premium
                     </button>
                     <div class="app-menu-divider"></div>
                     <button type="button" id="logoutBtn" class="app-menu-item app-menu-item-danger" role="menuitem" onclick="handleLogout()">

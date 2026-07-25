@@ -863,6 +863,9 @@
             badge.hidden = false;
             badge.textContent = isPremium() ? 'Premium' : 'Grátis';
             badge.classList.toggle('is-premium', isPremium());
+
+            const trigger = document.getElementById('assinarTrigger');
+            if (trigger) trigger.hidden = isPremium();
         }
 
         // ================================
@@ -1308,6 +1311,48 @@
             if (e.target.id === 'favoritesOverlay') closeFavoritesPanel();
         });
         document.getElementById('favoritesClearBtn').addEventListener('click', clearFavorites);
+
+        // ---------- Assinar Premium (feature nova) ----------
+        function openAssinarPanel() {
+            const user = auth.currentUser;
+            if (!user) {
+                showErrorToast('> crie uma conta (ou entre) para assinar o premium_');
+                return;
+            }
+            document.getElementById('appMenuDropdown').classList.remove('show');
+            document.getElementById('assinarOverlay').classList.add('show');
+            document.getElementById('assinarConteudo').innerHTML = '<p>Gerando o QR Code do Pix...</p>';
+
+            const criarAssinatura = functionsRegion.httpsCallable('criarAssinatura');
+            criarAssinatura()
+                .then((resultado) => {
+                    const { encodedImage, payload, expirationDate } = resultado.data;
+                    const conteudo = document.getElementById('assinarConteudo');
+                    conteudo.innerHTML = `
+                        <p>Escaneie o QR Code abaixo no app do seu banco pra assinar por <strong>R$ 14,90/mês</strong>:</p>
+                        <img class="assinar-qrcode" alt="QR Code Pix da assinatura" src="data:image/png;base64,${encodedImage}">
+                        <p>Ou copie o código:</p>
+                        <textarea class="assinar-copia-cola" readonly rows="3">${payload}</textarea>
+                        <p class="assinar-aguardando">⏳ Assim que o Pix cair, o plano libera sozinho aqui no app — não precisa recarregar a página.</p>
+                        ${expirationDate ? `<p style="font-size:11px;">Esse QR Code vale até ${new Date(expirationDate).toLocaleString('pt-BR')}.</p>` : ''}
+                    `;
+                })
+                .catch((err) => {
+                    console.error('Erro ao criar assinatura:', err);
+                    document.getElementById('assinarConteudo').innerHTML =
+                        `<p>Não foi possível gerar o Pix agora (${err.message || 'tente de novo em instantes'}).</p>`;
+                });
+        }
+
+        function closeAssinarPanel() {
+            document.getElementById('assinarOverlay').classList.remove('show');
+        }
+
+        document.getElementById('assinarTrigger').addEventListener('click', openAssinarPanel);
+        document.getElementById('assinarClose').addEventListener('click', closeAssinarPanel);
+        document.getElementById('assinarOverlay').addEventListener('click', (e) => {
+            if (e.target.id === 'assinarOverlay') closeAssinarPanel();
+        });
         document.getElementById('favoritesList').addEventListener('click', (e) => {
             const btn = e.target.closest('button[data-action]');
             if (!btn) return;
@@ -2109,6 +2154,7 @@
                 // Modo visitante: sem conta, sem histórico/favoritos/links/biblioteca sincronizados, nada pra excluir.
                 sessionStorage.setItem(GUEST_FLAG_KEY, '1');
                 document.getElementById('planoBadge').hidden = true;
+                document.getElementById('assinarTrigger').hidden = true;
                 stopPlanoListener();
                 stopHistoryListener();
                 stopFavoritesListener();

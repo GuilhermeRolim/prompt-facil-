@@ -1497,6 +1497,67 @@
     opacity: 1;
     visibility: visible;
 }
+/* Modal "Assinar Premium" — QR Code Pix (feature nova) */
+#assinarOverlay {
+    position: fixed;
+    inset: 0;
+    background: var(--modal-backdrop);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+    z-index: 1300;
+}
+#assinarOverlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+#assinarPanel {
+    width: min(94vw, 420px);
+    max-height: min(85vh, 640px);
+    display: flex;
+    flex-direction: column;
+    background: var(--surface-solid);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(var(--shadow-rgb), 0.6), 0 0 40px rgba(168, 85, 247, 0.15);
+}
+.assinar-conteudo {
+    padding: 20px;
+    overflow-y: auto;
+    text-align: center;
+    color: var(--text-secondary);
+}
+.assinar-conteudo img.assinar-qrcode {
+    width: 220px;
+    height: 220px;
+    margin: 12px auto;
+    border-radius: 12px;
+    background: #fff;
+    padding: 8px;
+    display: block;
+}
+.assinar-conteudo .assinar-copia-cola {
+    width: 100%;
+    font-size: 11px;
+    word-break: break-all;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 10px;
+    color: var(--text-primary);
+    margin-top: 8px;
+}
+.assinar-conteudo .assinar-aguardando {
+    font-size: 13px;
+    color: var(--cyan);
+    margin-top: 12px;
+}
 #favoritesPanel {
     width: min(94vw, 520px);
     max-height: min(80vh, 640px);

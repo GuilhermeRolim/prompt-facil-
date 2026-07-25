@@ -72,13 +72,16 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == uid
                     && request.resource.data.plano == 'gratis';
       allow read, delete: if request.auth != null && request.auth.uid == uid;
-      // Atualização normal do perfil (nome etc.) é livre, MAS o campo "plano"
-      // não pode mudar por aqui — só manualmente pelo Console do Firebase (ou,
-      // quando o pagamento estiver pronto, pela Cloud Function que confirma o
-      // Pix, que usa o Admin SDK e ignora estas regras). Isso é o que impede
-      // alguém de virar "premium" só editando o JavaScript do navegador.
+      // Atualização normal do perfil (nome etc.) é livre, MAS "plano" e os
+      // campos ligados ao Asaas não podem mudar por aqui — só manualmente
+      // pelo Console do Firebase, ou pelas Cloud Functions (que usam o Admin
+      // SDK e ignoram estas regras). Isso é o que impede alguém de virar
+      // "premium" (ou embaralhar o ID da assinatura de outra pessoa) só
+      // editando o JavaScript do navegador.
       allow update: if request.auth != null && request.auth.uid == uid
-                    && request.resource.data.plano == resource.data.plano;
+                    && request.resource.data.plano == resource.data.plano
+                    && request.resource.data.get('asaasCustomerId', null) == resource.data.get('asaasCustomerId', null)
+                    && request.resource.data.get('asaasSubscriptionId', null) == resource.data.get('asaasSubscriptionId', null);
 
       // Histórico de prompts do usuário — só o próprio dono lê/escreve/apaga.
       match /prompts/{promptId} {

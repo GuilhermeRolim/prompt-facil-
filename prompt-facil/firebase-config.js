@@ -44,6 +44,8 @@ firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
 const auth = firebase.auth();
 const db = firebase.firestore();
+// Mesma região usada nas Cloud Functions (functions/index.js) — se uma mudar, a outra também precisa mudar.
+const functionsRegion = firebase.app().functions('southamerica-east1');
 
 // Deixa o Firestore utilizável offline (cache local), para o app não quebrar
 // totalmente sem internet — mas login/cadastro e sincronização em si exigem rede.
