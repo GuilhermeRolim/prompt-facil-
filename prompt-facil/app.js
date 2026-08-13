@@ -425,15 +425,6 @@
         buildCustomSelect(document.getElementById('templateSelect'));
         setCustomSelectDisabled('templateSelect', true);
 
-        // Abre/fecha o bloco "Modelo pronto por profissão" — recolhido por padrão,
-        // já que a maioria das pessoas escreve a descrição do zero.
-        function toggleTemplatesBox() {
-            const box = document.getElementById('templatesBox');
-            const toggle = document.getElementById('templatesToggle');
-            const isOpen = box.classList.toggle('open');
-            toggle.setAttribute('aria-expanded', String(isOpen));
-        }
-
         // Troca a profissão: repopula a lista de modelos (ou esconde, se "Nenhum")
         function updateTemplateOptions() {
             const professionId = document.getElementById('professionSelect').value;
@@ -519,7 +510,6 @@
             if (!el.value.trim()) {
                 setCustomSelectDisabled('aiTarget', true);
                 document.getElementById('openAiButton').disabled = true;
-                document.getElementById('copyPromptButton').disabled = true;
                 document.getElementById('favoritePromptButton').disabled = true;
                 document.getElementById('sharePromptButton').disabled = true;
             }
@@ -531,16 +521,6 @@
             const description = document.getElementById('description').value.trim();
             const hasContent = description !== '';
             document.getElementById('generateButton').disabled = !hasContent;
-            updateDescriptionCount();
-        }
-
-        // Contador de caracteres da descrição (feedback visual de quão detalhada está a descrição)
-        function updateDescriptionCount() {
-            const countEl = document.getElementById('descriptionCount');
-            if (!countEl) return;
-            const length = document.getElementById('description').value.length;
-            countEl.textContent = `${length} caractere${length === 1 ? '' : 's'}`;
-            countEl.classList.toggle('char-count-low', length > 0 && length < 15);
         }
 
         // Adiciona event listener ao textarea para verificar em tempo real
@@ -621,7 +601,6 @@
             document.getElementById('aiTarget').value = '';
             refreshCustomSelect('aiTarget');
             document.getElementById('openAiButton').disabled = true;
-            document.getElementById('copyPromptButton').disabled = false;
             document.getElementById('favoritePromptButton').disabled = false;
             document.getElementById('sharePromptButton').disabled = false;
             setFavoriteButtonBusy(false);
@@ -1096,7 +1075,6 @@
             document.getElementById('aiTarget').value = '';
             refreshCustomSelect('aiTarget');
             document.getElementById('openAiButton').disabled = true;
-            document.getElementById('copyPromptButton').disabled = false;
             setFavoriteButtonBusy(false);
             document.getElementById('favoritePromptButton').disabled = false;
             document.getElementById('sharePromptButton').disabled = false;
@@ -1300,7 +1278,6 @@
             document.getElementById('aiTarget').value = '';
             refreshCustomSelect('aiTarget');
             document.getElementById('openAiButton').disabled = true;
-            document.getElementById('copyPromptButton').disabled = false;
             setFavoriteButtonBusy(false);
             document.getElementById('favoritePromptButton').disabled = false;
             document.getElementById('sharePromptButton').disabled = false;

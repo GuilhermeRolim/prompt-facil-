@@ -301,6 +301,11 @@
             </button>
         </div>
 
+        <div id="syncStatus" class="sync-status">
+            <span class="sync-dot"></span>
+            <span id="syncStatusText">Sincronizado</span>
+        </div>
+
         <div id="verifyEmailBanner" class="verify-email-banner" hidden>
             <span>📩 Confirme seu email para garantir seu acesso.</span>
             <button type="button" id="resendVerificationBtn" onclick="resendVerificationEmail()">Reenviar email</button>
@@ -311,22 +316,16 @@
         <p>Descreva sua necessidade e receba um prompt rico para copiar e colar em IAs como ChatGPT e Gemini!</p>
 
         <div id="templatesBox" class="templates-box">
-            <button type="button" id="templatesToggle" class="templates-toggle" onclick="toggleTemplatesBox()" aria-expanded="false" aria-controls="templatesContent">
-                <span>⚡ Usar um modelo pronto por profissão (opcional)</span>
-                <span class="templates-toggle-icon">▾</span>
-            </button>
-            <div id="templatesContent" class="templates-content">
-                <label for="professionSelect">Profissão:</label>
-                <select id="professionSelect" onchange="updateTemplateOptions()">
-                    <option value="">Nenhum — vou escrever do zero</option>
+            <label for="professionSelect">Modelo pronto por profissão (opcional):</label>
+            <select id="professionSelect" onchange="updateTemplateOptions()">
+                <option value="">Nenhum — vou escrever do zero</option>
+            </select>
+            <div id="templateOptionWrapper" class="dynamic-field" style="display:none;">
+                <label for="templateSelect">Modelo:</label>
+                <select id="templateSelect" onchange="handleTemplateSelected()">
+                    <option value="">Selecione um modelo</option>
                 </select>
-                <div id="templateOptionWrapper" class="dynamic-field" style="display:none;">
-                    <label for="templateSelect">Modelo:</label>
-                    <select id="templateSelect" onchange="handleTemplateSelected()">
-                        <option value="">Selecione um modelo</option>
-                    </select>
-                    <p class="template-hint">O modelo pré-preenche categoria, descrição e detalhes — você pode editar tudo depois.</p>
-                </div>
+                <p class="template-hint">O modelo pré-preenche categoria, descrição e detalhes — você pode editar tudo depois.</p>
             </div>
         </div>
 
@@ -390,12 +389,11 @@
 
         <div class="textarea-wrapper">
             <label for="description">Descrição da Necessidade:</label>
-            <textarea id="description" rows="4" placeholder="" autocomplete="off"></textarea>
-            <span id="descriptionCount" class="char-count">0 caracteres</span>
+            <textarea id="description" rows="4" placeholder=""></textarea>
         </div>
 
         <label for="details">Detalhes Adicionais (opcional):</label>
-        <input type="text" id="details" placeholder="Ex.: Foco em ferramentas digitais, exemplos práticos..." autocomplete="off">
+        <input type="text" id="details" placeholder="Ex.: Foco em ferramentas digitais, exemplos práticos...">
 
         <button id="generateButton" onclick="generatePrompt()" disabled>Gerar meu Prompt</button>
 
@@ -410,18 +408,17 @@
                 <label for="aiTarget">Abrir prompt em:</label>
                 <select id="aiTarget" onchange="handleAiTargetChange()" disabled>
                     <option value="" selected>Selecione o destino</option>
-                    <option value="gemini">Gemini (colar manual)</option>
-                    <option value="chatgpt">ChatGPT (preenche sozinho)</option>
-                    <option value="claude">Claude (colar manual)</option>
-                    <option value="perplexity">Perplexity (preenche sozinho)</option>
-                    <option value="copilot">Copilot (colar manual)</option>
-                    <option value="deepseek">DeepSeek (colar manual)</option>
-                    <option value="grok">Grok (colar manual)</option>
+                    <option value="gemini">Gemini</option>
+                    <option value="chatgpt">ChatGPT</option>
+                    <option value="claude">Claude</option>
+                    <option value="perplexity">Perplexity</option>
+                    <option value="copilot">Copilot</option>
+                    <option value="deepseek">DeepSeek</option>
+                    <option value="grok">Grok</option>
                 </select>
             </div>
             <div class="action-row">
                 <button id="openAiButton" onclick="openSelectedAI()" disabled>✦ Copiar e Abrir</button>
-                <button id="copyPromptButton" class="secondary-action-btn" onclick="copyPrompt()" disabled>⧉ Copiar</button>
                 <button id="favoritePromptButton" class="secondary-action-btn" onclick="favoriteCurrentPrompt()" disabled>☆ Favoritar</button>
                 <button id="sharePromptButton" class="secondary-action-btn" onclick="shareCurrentPrompt()" disabled>🔗 Compartilhar</button>
             </div>
@@ -436,11 +433,6 @@
             </div>
         </div>
     </div>
-    </div>
-
-    <div id="syncStatus" class="sync-status">
-        <span class="sync-dot"></span>
-        <span id="syncStatusText">Sincronizado</span>
     </div>
 
     <script src="prompt-builder.js" defer></script>
