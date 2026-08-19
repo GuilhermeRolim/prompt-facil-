@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Gerador de Prompts para Pesquisas - Crie prompts ricos para IAs como ChatGPT e Gemini.">
+    <meta name="keywords" content="prompts, IA, ChatGPT, Gemini, pesquisa, programação">
+    <meta name="robots" content="index, follow">
+    <title>Prompt Fácil</title>
+
+    <!-- Open Graph / compartilhamento social (quick win) -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Prompt Fácil">
+    <meta property="og:description" content="Gerador de Prompts para Pesquisas - Crie prompts ricos para IAs como ChatGPT e Gemini.">
+    <meta property="og:image" content="icon-512-v2.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Prompt Fácil">
+    <meta name="twitter:description" content="Gerador de Prompts para Pesquisas - Crie prompts ricos para IAs como ChatGPT e Gemini.">
+    <meta name="twitter:image" content="icon-512-v2.png">
+
+    <!-- Configuração de PWA (instalação em celulares e computadores) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#060815">
+    <link rel="icon" href="icon-192-v2.png" type="image/png">
+    <link rel="apple-touch-icon" href="icon-192-v2.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Prompt Fácil">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Aplica o tema salvo (claro/escuro) antes do primeiro paint, pra não piscar o tema errado -->
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('promptFacil.theme');
+                var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+                if (theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+            } catch (e) {}
+        })();
+    </script>
+
+    <!-- Firebase (Auth + Firestore) para sincronizar login/histórico entre dispositivos -->
+    <!-- defer: espera o HTML terminar de carregar antes de rodar. Sem isso, o script -->
+    <!-- do reCAPTCHA (App Check) tenta inserir algo no <body> antes dele existir e quebra. -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-check-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-functions-compat.js" defer></script>
+    <script src="firebase-config.js" defer></script>
+</head>
+<body>
+    <!-- role="status"/aria-live: leitores de tela anunciam o toast automaticamente (quick win) -->
+    <div id="toast" role="status" aria-live="polite">&gt; prompt copiado com sucesso_</div>
+
+    <div id="installBanner">
+        <div class="update-text">
+            <span class="install-icon">⬇</span>
+            <div>
+                <strong>Instale o Prompt Fácil</strong>
+                <p>Acesse mais rápido, direto da tela do seu dispositivo.</p>
+            </div>
+        </div>
+        <div class="update-actions">
+            <button id="installLaterBtn" class="update-later">Agora não</button>
+            <button id="installNowBtn" class="update-now">Instalar</button>
+        </div>
+    </div>
+
+    <div id="iosModalOverlay">
+        <div id="iosModal" role="dialog" aria-modal="true" aria-labelledby="iosModalTitle">
+            <div class="terminal-bar">
+                <span></span><span></span><span></span>
+                <span class="terminal-label">instalar_app.txt</span>
+            </div>
+            <div class="ios-modal-body">
+                <h3 id="iosModalTitle">Como instalar no iPhone/iPad</h3>
+                <ol>
+                    <li>Toque no ícone de <strong>Compartilhar</strong> <span class="ios-share-icon">⬆</span> na barra do Safari</li>
+                    <li>Role para baixo e toque em <strong>"Adicionar à Tela de Início"</strong></li>
+                    <li>Toque em <strong>"Adicionar"</strong> no canto superior direito</li>
+                </ol>
+                <button id="iosModalClose" class="update-now">Entendi</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="updateBanner">
+        <div class="update-text">
+            <span class="update-dot"></span>
+            <div>
+                <strong>Nova versão disponível</strong>
+                <p>Atualize para ver as últimas melhorias do app.</p>
+            </div>
+        </div>
+        <div class="update-actions">
+            <button id="updateLaterBtn" class="update-later">Depois</button>
+            <button id="updateNowBtn" class="update-now">Atualizar agora</button>
+        </div>
+    </div>
+
+    <!-- Sprite de ícones (usado na barra lateral e no acordeão de modelos) -->
+    <svg style="display:none" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+        <symbol id="i-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-8.5L1 10"/></symbol>
+        <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+        <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+        <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+        <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+        <symbol id="i-gem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M12 3l-3 6 3 12 3-12-3-6"/></symbol>
+        <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><line x1="12" y1="2.5" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="21.5"/><line x1="4.9" y1="4.9" x2="7.3" y2="7.3"/><line x1="16.7" y1="16.7" x2="19.1" y2="19.1"/><line x1="2.5" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="21.5" y2="12"/><line x1="4.9" y1="19.1" x2="7.3" y2="16.7"/><line x1="16.7" y1="7.3" x2="19.1" y2="4.9"/></symbol>
+        <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
+        <symbol id="i-classic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></symbol>
+    </svg>
+
+
+    <!-- Painel "Assinar Premium" — QR Code Pix da assinatura (feature nova) -->
+    <!-- Painéis do layout Clássico — mesma estrutura do formato original que existia antes do Studio.
+         O conteúdo (listas, formulário) é compartilhado com o Studio e só é "movido" pra cá via JS
+         (applyLayout), então não existe duplicação de dados nem de listeners. -->
+    <div id="historyOverlay" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+        <div id="historyPanel">
+            <div class="terminal-bar history-header">
+                <span></span><span></span><span></span>
+                <span class="terminal-label" id="historyTitle" style="flex:1;">historico_prompts.txt</span>
+                <button type="button" id="historyClose" class="history-close-btn" aria-label="Fechar histórico">✕</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="favoritesOverlay" role="dialog" aria-modal="true" aria-labelledby="favoritesTitle">
+        <div id="favoritesPanel">
+            <div class="terminal-bar history-header">
+                <span></span><span></span><span></span>
+                <span class="terminal-label" id="favoritesTitle" style="flex:1;">favoritos.txt</span>
+                <button type="button" id="favoritesClose" class="history-close-btn" aria-label="Fechar favoritos">✕</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mySharesOverlay" role="dialog" aria-modal="true" aria-labelledby="mySharesTitle">
+        <div id="mySharesPanel">
+            <div class="terminal-bar history-header">
+                <span></span><span></span><span></span>
+                <span class="terminal-label" id="mySharesTitle" style="flex:1;">meus_links.txt</span>
+                <button type="button" id="mySharesClose" class="history-close-btn" aria-label="Fechar meus links">✕</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="publicLibraryOverlay" role="dialog" aria-modal="true" aria-labelledby="publicLibraryTitle">
+        <div id="publicLibraryPanel">
+            <div class="terminal-bar history-header">
+                <span></span><span></span><span></span>
+                <span class="terminal-label" id="publicLibraryTitle" style="flex:1;">biblioteca_publica.txt</span>
+                <button type="button" id="publicLibraryClose" class="history-close-btn" aria-label="Fechar biblioteca pública">✕</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="assinarOverlay" role="dialog" aria-modal="true" aria-labelledby="assinarTitle">
+        <div id="assinarPanel">
+            <div class="terminal-bar history-header">
+                <span></span><span></span><span></span>
+                <span class="terminal-label" id="assinarTitle" style="flex:1;">assinatura_premium.txt</span>
+                <button type="button" id="assinarClose" class="history-close-btn" aria-label="Fechar tela de assinatura">✕</button>
+            </div>
+            <div id="assinarConteudo" class="assinar-conteudo">
+                <p>Carregando...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Painel do prompt recebido por link compartilhado (continua como painel sobreposto — é um link recebido, não um destino de navegação) -->
+    <div id="sharedPromptOverlay" role="dialog" aria-modal="true" aria-labelledby="sharedPromptTitle">
+        <div id="sharedPromptPanel">
+            <div class="terminal-bar history-header">
+                <span></span><span></span><span></span>
+                <span class="terminal-label" id="sharedPromptTitle" style="flex:1;">prompt_compartilhado.txt</span>
+                <button type="button" id="sharedPromptClose" class="history-close-btn" aria-label="Fechar">✕</button>
+            </div>
+            <div id="sharedPromptBody" class="shared-prompt-body"></div>
+        </div>
+    </div>
+
+    <!-- Política de Privacidade em painel sobreposto (em vez de abrir outra aba) -->
+    <div id="privacyOverlay" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
+        <div id="privacyPanel">
+            <div class="terminal-bar history-header">
+                <span></span><span></span><span></span>
+                <span class="terminal-label" id="privacyTitle" style="flex:1;">politica-privacidade.html</span>
+                <button type="button" id="privacyClose" class="history-close-btn" aria-label="Fechar política de privacidade" onclick="closePrivacyModal()">✕</button>
+            </div>
+            <iframe id="privacyFrame" title="Política de Privacidade" loading="lazy"></iframe>
+        </div>
+    </div>
+
+    <!-- ======================== -->
+    <!-- Tela de autenticação     -->
+    <!-- ======================== -->
+    <div id="authScreen">
+        <div class="auth-wallpaper">
+            <button type="button" class="theme-toggle auth-theme-toggle" id="themeToggleAuth" onclick="toggleTheme()" aria-label="Alternar entre modo claro e escuro">
+                <span class="theme-icon-light">☀</span><span class="theme-icon-dark">🌙</span>
+            </button>
+            <img src="icon-512-v2.png" class="auth-logo" alt="">
+            <h1 class="auth-app-name">Prompt Fácil</h1>
+            <p class="auth-tagline">Gerador de Prompts para IAs</p>
+        </div>
+
+        <div class="container auth-card">
+            <div class="layout-picker">
+                <span class="layout-picker-label">Como prefere usar o app?</span>
+                <div class="layout-picker-options">
+                    <button type="button" class="layout-picker-btn" id="layoutPickStudio" data-layout="studio">
+                        <svg class="nav-icon"><use href="#i-grid" xlink:href="#i-grid"/></svg>
+                        Studio
+                    </button>
+                    <button type="button" class="layout-picker-btn" id="layoutPickClassic" data-layout="classic">
+                        <svg class="nav-icon"><use href="#i-classic" xlink:href="#i-classic"/></svg>
+                        Clássico
+                    </button>
+                </div>
+            </div>
+
+            <div class="auth-tabs">
+                <button type="button" id="tabLoginBtn" class="auth-tab is-active" onclick="switchAuthTab('login')">Entrar</button>
+                <button type="button" id="tabSignupBtn" class="auth-tab" onclick="switchAuthTab('signup')">Criar conta</button>
+            </div>
+
+            <div id="authErrorBox" class="auth-error" role="alert" hidden></div>
+            <div id="authSuccessBox" class="auth-success" role="status" hidden></div>
+
+            <div id="loginPane" class="auth-pane">
+                <label for="loginEmail">Email:</label>
+                <input type="email" id="loginEmail" autocomplete="email" placeholder="voce@email.com">
+                <label for="loginPassword">Senha:</label>
+                <input type="password" id="loginPassword" autocomplete="current-password" placeholder="Sua senha">
+                <label class="consent-line remember-me-line" for="rememberMeCheckbox">
+                    <input type="checkbox" id="rememberMeCheckbox" checked>
+                    <span>Lembrar de mim</span>
+                </label>
+                <button type="button" id="loginSubmitBtn" onclick="handleLogin()">Entrar</button>
+                <p class="auth-switch-line"><a href="#" onclick="handleForgotPassword(); return false;">Esqueci minha senha</a></p>
+                <p class="auth-switch-line">Ainda não tem conta? <a href="#" onclick="switchAuthTab('signup'); return false;">Criar agora</a></p>
+            </div>
+
+            <div id="signupPane" class="auth-pane" hidden>
+                <label for="signupName">Nome completo:</label>
+                <input type="text" id="signupName" autocomplete="name" placeholder="Seu nome completo">
+                <label for="signupEmail">Email:</label>
+                <input type="email" id="signupEmail" autocomplete="email" placeholder="voce@email.com">
+                <label for="signupPassword">Senha:</label>
+                <input type="password" id="signupPassword" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+                <label for="signupPasswordConfirm">Confirmar senha:</label>
+                <input type="password" id="signupPasswordConfirm" autocomplete="new-password" placeholder="Repita a senha">
+                <label class="consent-line" for="consentCheckbox">
+                    <input type="checkbox" id="consentCheckbox">
+                    <span>Li e concordo com a <a href="politica-privacidade.html" onclick="return openPrivacyModal(event)">Política de Privacidade</a>.</span>
+                </label>
+                <button type="button" id="signupSubmitBtn" onclick="handleSignup()">Criar conta</button>
+                <p class="auth-switch-line">Já tem conta? <a href="#" onclick="switchAuthTab('login'); return false;">Entrar</a></p>
+            </div>
+
+            <button type="button" id="guestModeBtn" class="guest-mode-link" onclick="continueAsGuest()">Continuar sem criar conta →</button>
+
+            <p class="auth-slots-note" id="authSlotsNote">Acesso gratuito limitado às 100 primeiras contas, enquanto o app está em fase inicial.</p>
+        </div>
+    </div>
+
+    <!-- ======================== -->
+    <!-- Tela principal do app    -->
+    <!-- ======================== -->
+    <div id="appScreen" hidden>
+    <div id="syncStatus" class="sync-status">
+        <span class="sync-dot"></span>
+        <span id="syncStatusText">Sincronizado</span>
+    </div>
+    <div class="app-shell" id="studioLayout">
+        <div class="app-toolbar">
+            <div class="app-brand">
+                <span class="app-brand-mark">✦</span>
+                <span class="app-brand-name">Prompt Fácil</span>
+            </div>
+            <button type="button" class="theme-toggle-switch" id="themeToggleApp" onclick="toggleTheme()" role="switch" aria-checked="false" aria-label="Alternar entre modo claro e escuro">
+                <span class="theme-toggle-knob">
+                    <span class="theme-icon-light">☀</span>
+                    <span class="theme-icon-dark">🌙</span>
+                </span>
+            </button>
+        </div>
+
+        <div id="verifyEmailBanner" class="verify-email-banner" hidden>
+            <span>📩 Confirme seu email para garantir seu acesso.</span>
+            <button type="button" id="resendVerificationBtn" onclick="resendVerificationEmail()">Reenviar email</button>
+        </div>
+
+        <div class="studio-shell" id="studioShell">
+            <aside class="studio-sidebar">
+                <nav class="studio-nav">
+                    <button type="button" class="nav-item active" data-page="novo"><svg class="nav-icon"><use href="#i-plus" xlink:href="#i-plus"/></svg>Novo prompt</button>
+                    <button type="button" class="nav-item" id="historyTrigger" data-page="historico" hidden><svg class="nav-icon"><use href="#i-history" xlink:href="#i-history"/></svg>Histórico</button>
+                    <button type="button" class="nav-item" id="favoritesTrigger" data-page="favoritos" hidden><svg class="nav-icon"><use href="#i-star" xlink:href="#i-star"/></svg>Favoritos</button>
+                    <button type="button" class="nav-item" data-page="modelos"><svg class="nav-icon"><use href="#i-grid" xlink:href="#i-grid"/></svg>Modelos por profissão</button>
+                    <button type="button" class="nav-item" id="mySharesTrigger" data-page="links" hidden><svg class="nav-icon"><use href="#i-link" xlink:href="#i-link"/></svg>Meus links</button>
+                    <button type="button" class="nav-item" id="publicLibraryTrigger" data-page="biblioteca" hidden><svg class="nav-icon"><use href="#i-globe" xlink:href="#i-globe"/></svg>Biblioteca pública</button>
+                    <button type="button" class="nav-item" id="assinarTrigger" hidden><svg class="nav-icon"><use href="#i-gem" xlink:href="#i-gem"/></svg>Assinar Premium</button>
+                    <button type="button" class="nav-item" data-page="config"><svg class="nav-icon"><use href="#i-settings" xlink:href="#i-settings"/></svg>Configurações</button>
+                </nav>
+                <div class="sidebar-bottom">
+                    <span id="planoBadge" class="plano-badge" hidden>Grátis</span>
+                    <button type="button" class="layout-toggle-switch" id="layoutToggleStudio" role="switch" aria-checked="true" aria-label="Alternar para o layout clássico">
+                        <span class="layout-toggle-knob">
+                            <svg class="layout-icon-studio"><use href="#i-grid" xlink:href="#i-grid"/></svg>
+                            <svg class="layout-icon-classic"><use href="#i-classic" xlink:href="#i-classic"/></svg>
+                        </span>
+                    </button>
+                </div>
+            </aside>
+
+            <main class="studio-main">
+
+                <!-- ======== NOVO PROMPT ======== -->
+                <div class="studio-page active" data-page="novo">
+                    <div class="eyebrow"><span class="dot"></span> prompt engine online</div>
+                    <h1>Prompt Fácil</h1>
+                    <p>Descreva sua necessidade e receba um prompt rico para copiar e colar em IAs como ChatGPT e Gemini!</p>
+
+                    <div id="sharedFormBlock">
+                    <div id="templatesBox" class="templates-box" hidden>
+                        <label for="professionSelect">Modelo pronto por profissão (opcional):</label>
+                        <select id="professionSelect" onchange="updateTemplateOptions()">
+                            <option value="">Nenhum — vou escrever do zero</option>
+                        </select>
+                        <div id="templateOptionWrapper" class="dynamic-field" style="display:none;">
+                            <label for="templateSelect">Modelo:</label>
+                            <select id="templateSelect" onchange="handleTemplateSelected()">
+                                <option value="">Selecione um modelo</option>
+                            </select>
+                            <p class="template-hint">O modelo pré-preenche categoria, descrição e detalhes — você pode editar tudo depois. Prefere navegar pelos modelos com descrições? Veja "Modelos por profissão" na barra lateral.</p>
+                        </div>
+                    </div>
+
+                    <label for="category">Categoria:</label>
+                    <select id="category" onchange="updateDynamicFields()">
+                        <option value="pesquisa">Pesquisa Geral</option>
+                        <option value="tecnico">Soluções Técnicas</option>
+                        <option value="dados">Análise de Dados</option>
+                        <option value="traducao">Tradução e Revisão de Texto</option>
+                        <option value="imagem">Prompt para Geração de Imagem</option>
+                    </select>
+
+                    <!-- Campo dinâmico apenas para Soluções Técnicas -->
+                    <div id="techFields" class="dynamic-field">
+                        <label for="programmingLanguage">Linguagem de Programação (opcional):</label>
+                        <input type="text" id="programmingLanguage" placeholder="Ex.: JavaScript, Python">
+                        <label for="problemType">Tipo de Problema (opcional):</label>
+                        <input type="text" id="problemType" placeholder="Ex.: Bug, otimização, implementação">
+                        <label for="environment">Ambiente/Contexto Técnico (opcional):</label>
+                        <input type="text" id="environment" placeholder="Ex.: Node.js 20, React, produção">
+                    </div>
+
+                    <!-- Campo dinâmico apenas para Análise de Dados -->
+                    <div id="dataFields" class="dynamic-field">
+                        <label for="dataType">Tipo de Dados (opcional):</label>
+                        <input type="text" id="dataType" placeholder="Ex.: vendas mensais, pesquisa de satisfação">
+                        <label for="dataFormat">Formato/Ferramenta (opcional):</label>
+                        <input type="text" id="dataFormat" placeholder="Ex.: planilha Excel, CSV, banco SQL">
+                        <label for="analysisGoal">Objetivo da Análise (opcional):</label>
+                        <input type="text" id="analysisGoal" placeholder="Ex.: identificar tendências, prever demanda">
+                    </div>
+
+                    <!-- Campo dinâmico apenas para Tradução e Revisão de Texto -->
+                    <div id="translationFields" class="dynamic-field">
+                        <label for="sourceLanguage">Idioma de Origem (opcional):</label>
+                        <input type="text" id="sourceLanguage" placeholder="Ex.: inglês">
+                        <label for="targetLanguage">Idioma de Destino (opcional):</label>
+                        <input type="text" id="targetLanguage" placeholder="Ex.: português">
+                        <label for="translationTone">Tom/Formalidade (opcional):</label>
+                        <input type="text" id="translationTone" placeholder="Ex.: formal, informal, técnico">
+                    </div>
+
+                    <!-- Campo dinâmico apenas para Prompt de Geração de Imagem -->
+                    <div id="imageFields" class="dynamic-field">
+                        <label for="imageStyle">Estilo Visual (opcional):</label>
+                        <input type="text" id="imageStyle" placeholder="Ex.: fotorrealista, aquarela, pixel art, 3D render">
+                        <label for="imageAspectRatio">Proporção/Formato (opcional):</label>
+                        <input type="text" id="imageAspectRatio" placeholder="Ex.: quadrado 1:1, paisagem 16:9, retrato 9:16">
+                        <label for="imageAvoid">Elementos a Evitar (opcional):</label>
+                        <input type="text" id="imageAvoid" placeholder="Ex.: texto, marca d'água, pessoas">
+                    </div>
+
+                    <div id="depthLevelField">
+                        <label for="depthLevel">Nível de Profundidade:</label>
+                        <select id="depthLevel">
+                            <option value="iniciante">Iniciante (explicações simples, sem jargão)</option>
+                            <option value="intermediario" selected>Intermediário (equilíbrio entre clareza e profundidade)</option>
+                            <option value="avancado">Avançado (foco técnico, nuances e detalhes especializados)</option>
+                        </select>
+                    </div>
+
+                    <div class="textarea-wrapper">
+                        <label for="description">Descrição da Necessidade:</label>
+                        <textarea id="description" rows="4" placeholder=""></textarea>
+                    </div>
+
+                    <label for="details">Detalhes Adicionais (opcional):</label>
+                    <input type="text" id="details" placeholder="Ex.: Foco em ferramentas digitais, exemplos práticos...">
+
+                    <button id="generateButton" onclick="generatePrompt()" disabled>Gerar meu Prompt</button>
+
+                    <div id="output">
+                        <div class="terminal-bar">
+                            <span></span><span></span><span></span>
+                            <span class="terminal-label">prompt_gerado.txt</span>
+                            <span class="editable-hint">✎ editável</span>
+                        </div>
+                        <textarea id="promptText" spellcheck="false" placeholder="Seu prompt gerado vai aparecer aqui — e você pode editar antes de copiar."></textarea>
+                        <div class="ai-target-field">
+                            <label for="aiTarget">Abrir prompt em:</label>
+                            <select id="aiTarget" onchange="handleAiTargetChange()" disabled>
+                                <option value="" selected>Selecione o destino</option>
+                                <option value="gemini">Gemini</option>
+                                <option value="chatgpt">ChatGPT</option>
+                                <option value="claude">Claude</option>
+                                <option value="perplexity">Perplexity</option>
+                                <option value="copilot">Copilot</option>
+                                <option value="deepseek">DeepSeek</option>
+                                <option value="grok">Grok</option>
+                            </select>
+                        </div>
+                        <div class="action-row">
+                            <button id="openAiButton" onclick="openSelectedAI()" disabled>✦ Copiar e Abrir</button>
+                            <button id="favoritePromptButton" class="secondary-action-btn" onclick="favoriteCurrentPrompt()" disabled>☆ Favoritar</button>
+                            <button id="sharePromptButton" class="secondary-action-btn" onclick="shareCurrentPrompt()" disabled>🔗 Compartilhar</button>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                <!-- ======== HISTÓRICO ======== -->
+                <div class="studio-page" data-page="historico">
+                    <div class="terminal-bar page-header">
+                        <span></span><span></span><span></span>
+                        <span class="terminal-label">historico_prompts.txt</span>
+                    </div>
+                    <div id="sharedHistoryBlock">
+                    <div id="historyList" class="history-list"></div>
+                    <div id="historyClearRow" class="history-clear-row" style="display:none;">
+                        <button type="button" id="historyClearBtn" class="history-clear-btn">Limpar todo o histórico</button>
+                    </div>
+                    </div>
+                </div>
+
+                <!-- ======== FAVORITOS ======== -->
+                <div class="studio-page" data-page="favoritos">
+                    <div class="terminal-bar page-header">
+                        <span></span><span></span><span></span>
+                        <span class="terminal-label">favoritos.txt</span>
+                    </div>
+                    <div id="sharedFavoritesBlock">
+                    <div id="favoritesList" class="history-list"></div>
+                    <div id="favoritesClearRow" class="history-clear-row" style="display:none;">
+                        <button type="button" id="favoritesClearBtn" class="history-clear-btn">Remover todos os favoritos</button>
+                    </div>
+                    </div>
+                </div>
+
+                <!-- ======== MODELOS POR PROFISSÃO ======== -->
+                <div class="studio-page" data-page="modelos">
+                    <div class="terminal-bar page-header">
+                        <span></span><span></span><span></span>
+                        <span class="terminal-label">modelos_por_profissao.txt</span>
+                    </div>
+                    <p class="page-intro">Clique numa profissão para ver os modelos prontos. Clique num modelo para aplicá-lo ao formulário.</p>
+                    <div id="professionTemplatesList" class="profession-list"></div>
+                </div>
+
+                <!-- ======== MEUS LINKS ======== -->
+                <div class="studio-page" data-page="links">
+                    <div class="terminal-bar page-header">
+                        <span></span><span></span><span></span>
+                        <span class="terminal-label">meus_links.txt</span>
+                    </div>
+                    <div id="mySharesList" class="history-list"></div>
+                </div>
+
+                <!-- ======== BIBLIOTECA PÚBLICA ======== -->
+                <div class="studio-page" data-page="biblioteca">
+                    <div class="terminal-bar page-header">
+                        <span></span><span></span><span></span>
+                        <span class="terminal-label">biblioteca_publica.txt</span>
+                    </div>
+                    <div id="sharedLibraryBlock">
+                    <div class="library-tabs">
+                        <button type="button" class="library-tab active" id="libraryTabExplore" data-tab="explore">Explorar</button>
+                        <button type="button" class="library-tab" id="libraryTabMine" data-tab="mine">Minhas publicações</button>
+                    </div>
+                    <div id="publicLibraryList" class="history-list"></div>
+                    </div>
+                </div>
+
+                <!-- ======== CONFIGURAÇÕES ======== -->
+                <div class="studio-page" data-page="config">
+                    <div class="terminal-bar page-header">
+                        <span></span><span></span><span></span>
+                        <span class="terminal-label">configuracoes.txt</span>
+                    </div>
+
+                    <h3 class="settings-title">Conta</h3>
+                    <div class="settings-card">
+                        <div class="settings-row">
+                            <div><strong id="configUserEmail">Modo visitante</strong><p>Conta usada para sincronizar seus prompts.</p></div>
+                        </div>
+                        <div class="settings-row">
+                            <div><strong>Plano</strong><p id="configPlanoText">Grátis</p></div>
+                            <span class="settings-hint">gerencie em "Assinar Premium" na barra lateral</span>
+                        </div>
+                    </div>
+
+                    <h3 class="settings-title">Privacidade</h3>
+                    <div class="settings-card">
+                        <div class="settings-row">
+                            <div><strong>Política de Privacidade</strong><p>Como tratamos seus dados, conforme a LGPD.</p></div>
+                            <a href="politica-privacidade.html" class="btn-ghost-small" onclick="return openPrivacyModal(event)">Abrir</a>
+                        </div>
+                    </div>
+
+                    <h3 class="settings-title settings-title-danger">Zona de risco</h3>
+                    <div class="settings-card settings-card-danger">
+                        <div class="settings-row" id="configLogoutRow">
+                            <div><strong>Sessão</strong><p>Encerrar sua sessão neste dispositivo.</p></div>
+                            <button type="button" id="logoutBtn" class="btn-ghost-small" onclick="handleLogout()"><span id="logoutBtnLabel">Sair</span></button>
+                        </div>
+                        <div class="settings-row" id="configDeleteRow">
+                            <div><strong>Excluir minha conta</strong><p>Remove permanentemente sua conta e histórico. Não pode ser desfeita.</p></div>
+                            <button type="button" id="deleteAccountBtn" class="btn-danger-small" onclick="handleDeleteAccount()" hidden>Excluir minha conta</button>
+                        </div>
+                    </div>
+
+                    <p class="settings-feedback"><a href="mailto:promptez2026@gmail.com">Sugestões / feedback</a></p>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ======================================================
+         LAYOUT CLÁSSICO — o formato original de card único.
+         O formulário, o histórico, os favoritos etc. não são
+         duplicados aqui: são os MESMOS elementos do Studio,
+         apenas "movidos" pra cá via JS (applyLayout) quando
+         esse é o layout escolhido.
+         ====================================================== -->
+    <div id="classicLayout" class="container" hidden>
+        <div class="app-top-row">
+            <div class="app-menu">
+                <button type="button" id="appMenuTrigger" class="app-menu-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="appMenuDropdown">
+                    ☰ Menu
+                </button>
+                <!-- planoBadge é inserido aqui via JS -->
+                <div id="appMenuDropdown" class="app-menu-dropdown" role="menu">
+                    <!-- historyTrigger, favoritesTrigger, mySharesTrigger, publicLibraryTrigger, assinarTrigger
+                         são inseridos aqui via JS, nessa ordem, antes do divisor -->
+                    <div class="app-menu-divider" id="classicMenuDivider"></div>
+                    <!-- logoutBtn é inserido aqui via JS -->
+                </div>
+            </div>
+            <button type="button" class="layout-toggle-switch" id="layoutToggleClassic" role="switch" aria-checked="false" aria-label="Alternar para o layout Studio">
+                <span class="layout-toggle-knob">
+                    <svg class="layout-icon-studio"><use href="#i-grid" xlink:href="#i-grid"/></svg>
+                    <svg class="layout-icon-classic"><use href="#i-classic" xlink:href="#i-classic"/></svg>
+                </span>
+            </button>
+            <!-- themeToggleApp é inserido aqui via JS -->
+        </div>
+
+        <!-- verifyEmailBanner é inserido aqui via JS -->
+
+        <div class="eyebrow"><span class="dot"></span> prompt engine online</div>
+        <h1>Prompt Fácil</h1>
+        <p>Descreva sua necessidade e receba um prompt rico para copiar e colar em IAs como ChatGPT e Gemini!</p>
+
+        <!-- sharedFormBlock é inserido aqui via JS -->
+
+        <div class="app-footer">
+            <!-- deleteAccountBtn é inserido aqui via JS -->
+            <div class="app-footer-links">
+                <a href="politica-privacidade.html" onclick="return openPrivacyModal(event)">Política de Privacidade</a>
+                <span aria-hidden="true">·</span>
+                <a href="mailto:promptez2026@gmail.com">Sugestões / feedback</a>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <script src="prompt-builder.js" defer></script>
+    <script src="app.js" defer></script>
+</body>
+</html>
