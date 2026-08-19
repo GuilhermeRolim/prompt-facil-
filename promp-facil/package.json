@@ -1,9 +1,0 @@
-{
-  "name": "prompt-facil",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Gerador de Prompts para IAs — testes automatizados da lógica de geração de prompt.",
-  "scripts": {
-    "test": "node --test"
-  }
-}
