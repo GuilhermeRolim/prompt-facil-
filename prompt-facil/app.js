@@ -28,6 +28,141 @@
             }
         }
 
+        // ---------- Layout Studio ou Clássico (feature nova) ----------
+        // A pessoa escolhe um dos dois formatos (tela de login ou pelo botão na
+        // barra lateral/topo) e a preferência fica salva no aparelho, como o tema.
+        // Os campos do formulário, histórico, favoritos etc. NÃO são duplicados —
+        // são os mesmos elementos "movidos" (reparented) entre os dois layouts,
+        // então não existe risco de dessincronia entre eles.
+        const LAYOUT_KEY = 'promptFacil.layout';
+        let currentLayout = 'studio';
+
+        function getLayoutPreference() {
+            try {
+                return localStorage.getItem(LAYOUT_KEY) || 'studio';
+            } catch (e) {
+                return 'studio';
+            }
+        }
+
+        function setLayoutPreference(layout) {
+            try {
+                localStorage.setItem(LAYOUT_KEY, layout);
+            } catch (e) {
+                // localStorage indisponível — a escolha vale só pra essa sessão.
+            }
+        }
+
+        function applyLayout(layout) {
+            const isStudio = layout !== 'classic';
+            currentLayout = isStudio ? 'studio' : 'classic';
+
+            document.getElementById('studioLayout').hidden = !isStudio;
+            document.getElementById('classicLayout').hidden = isStudio;
+
+            const studioToolbar = document.querySelector('#studioLayout .app-toolbar');
+            const studioShell = document.getElementById('studioShell');
+            const studioNav = document.querySelector('.studio-nav');
+            const studioModelosBtn = document.querySelector('.nav-item[data-page="modelos"]');
+            const studioConfigBtn = document.querySelector('.nav-item[data-page="config"]');
+            const studioSidebarBottom = document.querySelector('.sidebar-bottom');
+            const studioNovoPage = document.querySelector('.studio-page[data-page="novo"]');
+            const studioHistoricoPage = document.querySelector('.studio-page[data-page="historico"]');
+            const studioFavoritosPage = document.querySelector('.studio-page[data-page="favoritos"]');
+            const studioLinksPage = document.querySelector('.studio-page[data-page="links"]');
+            const studioBibliotecaPage = document.querySelector('.studio-page[data-page="biblioteca"]');
+            const configLogoutRow = document.getElementById('configLogoutRow');
+            const configDeleteRow = document.getElementById('configDeleteRow');
+
+            const classicTopRow = document.querySelector('#classicLayout .app-top-row');
+            const classicMenu = document.querySelector('#classicLayout .app-menu');
+            const classicMenuDropdown = document.getElementById('appMenuDropdown');
+            const classicMenuDivider = document.getElementById('classicMenuDivider');
+            const classicLayoutToggle = document.getElementById('layoutToggleClassic');
+            const classicEyebrow = document.querySelector('#classicLayout .eyebrow');
+            const classicFooter = document.querySelector('#classicLayout .app-footer');
+            const classicFooterLinks = document.querySelector('#classicLayout .app-footer-links');
+
+            const sharedFormBlock = document.getElementById('sharedFormBlock');
+            const sharedHistoryBlock = document.getElementById('sharedHistoryBlock');
+            const sharedFavoritesBlock = document.getElementById('sharedFavoritesBlock');
+            const sharedLibraryBlock = document.getElementById('sharedLibraryBlock');
+            const mySharesListEl = document.getElementById('mySharesList');
+            const planoBadgeEl = document.getElementById('planoBadge');
+            const verifyBannerEl = document.getElementById('verifyEmailBanner');
+            const deleteAccountBtnEl = document.getElementById('deleteAccountBtn');
+            const logoutBtnEl = document.getElementById('logoutBtn');
+            const themeToggleEl = document.getElementById('themeToggleApp');
+            const historyTriggerEl = document.getElementById('historyTrigger');
+            const favoritesTriggerEl = document.getElementById('favoritesTrigger');
+            const mySharesTriggerEl = document.getElementById('mySharesTrigger');
+            const publicLibraryTriggerEl = document.getElementById('publicLibraryTrigger');
+            const assinarTriggerEl = document.getElementById('assinarTrigger');
+            const historyPanelEl = document.getElementById('historyPanel');
+            const favoritesPanelEl = document.getElementById('favoritesPanel');
+            const mySharesPanelEl = document.getElementById('mySharesPanel');
+            const publicLibraryPanelEl = document.getElementById('publicLibraryPanel');
+
+            if (isStudio) {
+                // Garante que a biblioteca não fique com listeners ativos vindos do
+                // modo clássico (ela é sob demanda nos dois layouts).
+                stopPublicLibraryListener();
+                stopMyPublicationsListener();
+                studioNovoPage.appendChild(sharedFormBlock);
+                studioHistoricoPage.appendChild(sharedHistoryBlock);
+                studioFavoritosPage.appendChild(sharedFavoritesBlock);
+                studioLinksPage.appendChild(mySharesListEl);
+                studioBibliotecaPage.appendChild(sharedLibraryBlock);
+                studioSidebarBottom.insertBefore(planoBadgeEl, document.getElementById('layoutToggleStudio'));
+                studioShell.parentNode.insertBefore(verifyBannerEl, studioShell);
+                configLogoutRow.appendChild(logoutBtnEl);
+                configDeleteRow.appendChild(deleteAccountBtnEl);
+                studioToolbar.appendChild(themeToggleEl);
+                studioNav.insertBefore(historyTriggerEl, studioModelosBtn);
+                studioNav.insertBefore(favoritesTriggerEl, studioModelosBtn);
+                studioNav.insertBefore(mySharesTriggerEl, studioConfigBtn);
+                studioNav.insertBefore(publicLibraryTriggerEl, studioConfigBtn);
+                studioNav.insertBefore(assinarTriggerEl, studioConfigBtn);
+                // Nada deve continuar "aberto" no modo clássico enquanto estamos no Studio.
+                document.getElementById('historyOverlay').classList.remove('show');
+                document.getElementById('favoritesOverlay').classList.remove('show');
+                document.getElementById('mySharesOverlay').classList.remove('show');
+                document.getElementById('publicLibraryOverlay').classList.remove('show');
+                document.getElementById('appMenuDropdown').classList.remove('show');
+            } else {
+                // Mesma garantia, na direção contrária.
+                stopPublicLibraryListener();
+                stopMyPublicationsListener();
+                classicMenu.insertBefore(planoBadgeEl, classicMenuDropdown);
+                classicMenuDropdown.insertBefore(historyTriggerEl, classicMenuDivider);
+                classicMenuDropdown.insertBefore(favoritesTriggerEl, classicMenuDivider);
+                classicMenuDropdown.insertBefore(mySharesTriggerEl, classicMenuDivider);
+                classicMenuDropdown.insertBefore(publicLibraryTriggerEl, classicMenuDivider);
+                classicMenuDropdown.insertBefore(assinarTriggerEl, classicMenuDivider);
+                classicMenuDropdown.appendChild(logoutBtnEl);
+                classicTopRow.insertBefore(themeToggleEl, classicLayoutToggle);
+                classicTopRow.parentNode.insertBefore(verifyBannerEl, classicEyebrow);
+                classicTopRow.parentNode.insertBefore(sharedFormBlock, classicFooter);
+                classicFooter.insertBefore(deleteAccountBtnEl, classicFooterLinks);
+                historyPanelEl.appendChild(sharedHistoryBlock);
+                favoritesPanelEl.appendChild(sharedFavoritesBlock);
+                mySharesPanelEl.appendChild(mySharesListEl);
+                publicLibraryPanelEl.appendChild(sharedLibraryBlock);
+            }
+
+            document.querySelectorAll('.layout-toggle-switch').forEach((btn) => {
+                btn.setAttribute('aria-checked', String(isStudio));
+            });
+            document.querySelectorAll('.layout-picker-btn').forEach((btn) => {
+                btn.classList.toggle('is-active', btn.dataset.layout === currentLayout);
+            });
+        }
+
+        function switchLayout(layout) {
+            setLayoutPreference(layout);
+            applyLayout(layout);
+        }
+
         // ---------- Menu único do topo (feature nova) ----------
         // Consolida Histórico/Favoritos/Links/Biblioteca/Sair num só dropdown,
         // em vez de vários botões soltos. Cada item mantém seu próprio listener
@@ -54,12 +189,59 @@
                 openAppMenu();
             }
         });
-        // Clicar em qualquer lugar fora (inclusive em um item do menu, depois da
-        // ação dele já ter disparado) fecha o dropdown.
         document.addEventListener('click', closeAppMenu);
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closeAppMenu();
         });
+
+        // ---------- Navegação da barra lateral (Studio) — ver showStudioPage() mais abaixo ----------
+        // Troca qual .studio-page fica visível e destaca o item correspondente na
+        // barra lateral. Cada página pode ter uma ação ao entrar (ex.: renderizar
+        // uma lista) — a biblioteca pública também aciona/desliga seus listeners
+        // do Firestore aqui, mantendo o comportamento "sob demanda" que já existia
+        // (economiza leituras do plano gratuito — ver startPublicLibraryListener).
+        let currentStudioPage = 'novo';
+
+        function showStudioPage(page) {
+            if (page === currentStudioPage) return;
+
+            if (currentStudioPage === 'biblioteca') {
+                stopPublicLibraryListener();
+                stopMyPublicationsListener();
+            }
+
+            currentStudioPage = page;
+            document.querySelectorAll('.nav-item[data-page]').forEach((btn) => {
+                btn.classList.toggle('active', btn.dataset.page === page);
+            });
+            document.querySelectorAll('.studio-page').forEach((section) => {
+                section.classList.toggle('active', section.dataset.page === page);
+            });
+
+            if (page === 'historico') renderHistoryList();
+            if (page === 'favoritos') renderFavoritesList();
+            if (page === 'links') renderMySharesList();
+            if (page === 'modelos') renderProfessionTemplatesPage();
+            if (page === 'biblioteca') {
+                switchLibraryTab('explore');
+                startPublicLibraryListener();
+                if (auth.currentUser) startMyPublicationsListener(auth.currentUser.uid);
+            }
+        }
+
+        document.querySelectorAll('.nav-item[data-page="novo"], .nav-item[data-page="modelos"], .nav-item[data-page="config"]').forEach((btn) => {
+            btn.addEventListener('click', () => showStudioPage(btn.dataset.page));
+        });
+
+        document.getElementById('layoutToggleStudio').addEventListener('click', () => {
+            switchLayout(currentLayout === 'classic' ? 'studio' : 'classic');
+        });
+        document.getElementById('layoutToggleClassic').addEventListener('click', () => {
+            switchLayout(currentLayout === 'classic' ? 'studio' : 'classic');
+        });
+        document.getElementById('layoutPickStudio').addEventListener('click', () => switchLayout('studio'));
+        document.getElementById('layoutPickClassic').addEventListener('click', () => switchLayout('classic'));
+
 
         // ---------- Monitoramento de erros (visibilidade em produção, sem ferramenta paga) ----------
         // Registra erros que acontecem no navegador de quem está usando o app, direto numa
@@ -457,22 +639,9 @@
             setCustomSelectDisabled('templateSelect', false);
         }
 
-        // Aplica o modelo escolhido nos campos do formulário
-        function handleTemplateSelected() {
-            const professionId = document.getElementById('professionSelect').value;
-            const templateIndex = document.getElementById('templateSelect').value;
-            const profession = PROFESSION_TEMPLATES.find((p) => p.id === professionId);
-            if (!profession || templateIndex === '') return;
-            const tpl = profession.templates[Number(templateIndex)];
-            if (!tpl) return;
-
-            if (Number(templateIndex) > 0 && !isPremium()) {
-                showErrorToast('🔒 esse modelo é premium — assinaturas abrem em breve_');
-                document.getElementById('templateSelect').value = '';
-                refreshCustomSelect('templateSelect');
-                return;
-            }
-
+        // Aplica os campos de um modelo ao formulário — usada tanto pelo select
+        // "Modelo pronto por profissão" quanto pela página "Modelos por profissão".
+        function applyTemplateToFields(tpl) {
             document.getElementById('category').value = tpl.category;
             refreshCustomSelect('category');
             updateDynamicFields();
@@ -492,10 +661,107 @@
             }
 
             checkDescription();
+        }
+
+        function focusDescriptionField() {
             const descriptionField = document.getElementById('description');
             descriptionField.focus();
             descriptionField.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
+
+        // Aplica o modelo escolhido nos campos do formulário (fluxo do select inline)
+        function handleTemplateSelected() {
+            const professionId = document.getElementById('professionSelect').value;
+            const templateIndex = document.getElementById('templateSelect').value;
+            const profession = PROFESSION_TEMPLATES.find((p) => p.id === professionId);
+            if (!profession || templateIndex === '') return;
+            const tpl = profession.templates[Number(templateIndex)];
+            if (!tpl) return;
+
+            if (Number(templateIndex) > 0 && !isPremium()) {
+                showErrorToast('🔒 esse modelo é premium — assinaturas abrem em breve_');
+                document.getElementById('templateSelect').value = '';
+                refreshCustomSelect('templateSelect');
+                return;
+            }
+
+            applyTemplateToFields(tpl);
+            focusDescriptionField();
+        }
+
+        // ---------- Página "Modelos por profissão" (feature nova — acordeão) ----------
+        // Mesmos dados do PROFESSION_TEMPLATES acima, só que numa página que dá pra
+        // navegar/ler antes de escolher (em vez do select "às cegas"). Escolher um
+        // modelo aqui também sincroniza os selects da página "Novo prompt", pra tudo
+        // continuar consistente se a pessoa voltar pra lá.
+        function selectProfessionTemplate(professionId, templateIndex) {
+            const profession = PROFESSION_TEMPLATES.find((p) => p.id === professionId);
+            if (!profession) return;
+            const tpl = profession.templates[templateIndex];
+            if (!tpl) return;
+
+            if (templateIndex > 0 && !isPremium()) {
+                showErrorToast('🔒 esse modelo é premium — assinaturas abrem em breve_');
+                return;
+            }
+
+            applyTemplateToFields(tpl);
+
+            document.getElementById('professionSelect').value = professionId;
+            refreshCustomSelect('professionSelect');
+            updateTemplateOptions();
+            document.getElementById('templateSelect').value = String(templateIndex);
+            refreshCustomSelect('templateSelect');
+
+            showStudioPage('novo');
+            focusDescriptionField();
+        }
+
+        function renderProfessionTemplatesPage() {
+            const container = document.getElementById('professionTemplatesList');
+            if (!container) return;
+            const openProfessionId = container.dataset.openProfession || PROFESSION_TEMPLATES[0].id;
+
+            container.innerHTML = PROFESSION_TEMPLATES.map((profession) => {
+                const isOpen = profession.id === openProfessionId;
+                const rows = profession.templates.map((tpl, index) => {
+                    const locked = index > 0 && !isPremium();
+                    return `
+                        <button type="button" class="tpl-row${locked ? ' locked' : ''}" data-profession="${profession.id}" data-index="${index}">
+                            <span>${locked ? '🔒 ' : ''}${escapeHtml(tpl.label)}${locked ? ' (Premium)' : ''}</span>
+                        </button>
+                    `;
+                }).join('');
+                return `
+                    <div class="profession-card${isOpen ? ' open' : ''}" data-profession="${profession.id}">
+                        <button type="button" class="profession-header">
+                            <span class="profession-name">${escapeHtml(profession.label)}</span>
+                            <svg class="chevron"><use href="#i-chevron"/></svg>
+                        </button>
+                        <div class="tpl-body">${rows}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('professionTemplatesList').addEventListener('click', (e) => {
+            const header = e.target.closest('.profession-header');
+            if (header) {
+                const card = header.closest('.profession-card');
+                const container = document.getElementById('professionTemplatesList');
+                const wasOpen = card.classList.contains('open');
+                container.querySelectorAll('.profession-card').forEach((c) => c.classList.remove('open'));
+                if (!wasOpen) {
+                    card.classList.add('open');
+                    container.dataset.openProfession = card.dataset.profession;
+                }
+                return;
+            }
+            const row = e.target.closest('.tpl-row');
+            if (row) {
+                selectProfessionTemplate(row.dataset.profession, Number(row.dataset.index));
+            }
+        });
 
         // Prompt editável: cresce junto com o conteúdo (até o limite definido em CSS,
         // onde passa a rolar). Chamada tanto ao digitar quanto sempre que o valor é
@@ -842,7 +1108,10 @@
                     updatePlanoBadge();
                     // Se o plano mudou (ex.: alguém acabou de virar premium), reflete
                     // isso na lista de modelos por profissão, que depende do plano.
-                    if (mudou) updateTemplateOptions();
+                    if (mudou) {
+                        updateTemplateOptions();
+                        renderProfessionTemplatesPage();
+                    }
                 }, (err) => {
                     console.error('Não foi possível verificar o plano da conta:', err);
                 });
@@ -866,6 +1135,11 @@
 
             const trigger = document.getElementById('assinarTrigger');
             if (trigger) trigger.hidden = isPremium();
+
+            const configPlanoText = document.getElementById('configPlanoText');
+            if (configPlanoText && auth.currentUser) {
+                configPlanoText.textContent = isPremium() ? 'Premium' : 'Grátis';
+            }
         }
 
         // ================================
@@ -1057,12 +1331,18 @@
         }
 
         function openHistoryPanel() {
-            renderHistoryList();
-            document.getElementById('historyOverlay').classList.add('show');
+            if (currentLayout === 'classic') {
+                renderHistoryList();
+                document.getElementById('historyOverlay').classList.add('show');
+            } else {
+                showStudioPage('historico');
+            }
         }
 
         function closeHistoryPanel() {
-            document.getElementById('historyOverlay').classList.remove('show');
+            if (currentLayout === 'classic') {
+                document.getElementById('historyOverlay').classList.remove('show');
+            }
         }
 
         function restoreFromHistory(id) {
@@ -1080,6 +1360,7 @@
             document.getElementById('sharePromptButton').disabled = false;
 
             closeHistoryPanel();
+            if (currentLayout !== 'classic') showStudioPage('novo');
             document.getElementById('output').scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
@@ -1260,12 +1541,18 @@
         }
 
         function openFavoritesPanel() {
-            renderFavoritesList();
-            document.getElementById('favoritesOverlay').classList.add('show');
+            if (currentLayout === 'classic') {
+                renderFavoritesList();
+                document.getElementById('favoritesOverlay').classList.add('show');
+            } else {
+                showStudioPage('favoritos');
+            }
         }
 
         function closeFavoritesPanel() {
-            document.getElementById('favoritesOverlay').classList.remove('show');
+            if (currentLayout === 'classic') {
+                document.getElementById('favoritesOverlay').classList.remove('show');
+            }
         }
 
         function restoreFromFavorite(id) {
@@ -1283,6 +1570,7 @@
             document.getElementById('sharePromptButton').disabled = false;
 
             closeFavoritesPanel();
+            if (currentLayout !== 'classic') showStudioPage('novo');
             document.getElementById('output').scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
@@ -1319,7 +1607,7 @@
                 showErrorToast('> crie uma conta (ou entre) para assinar o premium_');
                 return;
             }
-            document.getElementById('appMenuDropdown').classList.remove('show');
+            closeAppMenu();
             document.getElementById('assinarOverlay').classList.add('show');
             document.getElementById('assinarConteudo').innerHTML = '<p>Gerando o QR Code do Pix...</p>';
 
@@ -1515,12 +1803,18 @@
         }
 
         function openMySharesPanel() {
-            renderMySharesList();
-            document.getElementById('mySharesOverlay').classList.add('show');
+            if (currentLayout === 'classic') {
+                renderMySharesList();
+                document.getElementById('mySharesOverlay').classList.add('show');
+            } else {
+                showStudioPage('links');
+            }
         }
 
         function closeMySharesPanel() {
-            document.getElementById('mySharesOverlay').classList.remove('show');
+            if (currentLayout === 'classic') {
+                document.getElementById('mySharesOverlay').classList.remove('show');
+            }
         }
 
         document.getElementById('mySharesTrigger').addEventListener('click', openMySharesPanel);
@@ -1864,18 +2158,25 @@
                 showErrorToast('> crie uma conta (ou entre) para acessar a biblioteca pública_');
                 return;
             }
-            switchLibraryTab('explore');
-            startPublicLibraryListener();
-            startMyPublicationsListener(auth.currentUser.uid);
-            document.getElementById('publicLibraryOverlay').classList.add('show');
+            if (currentLayout === 'classic') {
+                switchLibraryTab('explore');
+                startPublicLibraryListener();
+                startMyPublicationsListener(auth.currentUser.uid);
+                document.getElementById('publicLibraryOverlay').classList.add('show');
+            } else {
+                showStudioPage('biblioteca');
+            }
         }
 
         function closePublicLibraryPanel() {
-            document.getElementById('publicLibraryOverlay').classList.remove('show');
-            // Só mantém histórico/favoritos ligados o tempo todo — a biblioteca é
-            // consultada sob demanda, pra economizar leituras do plano gratuito.
+            // A biblioteca é consultada sob demanda (pra economizar leituras do plano
+            // gratuito) — desliga os listeners mesmo que a pessoa não tenha "fechado"
+            // nada explicitamente, ex.: ao navegar pra outra página ou fazer logout.
             stopPublicLibraryListener();
             stopMyPublicationsListener();
+            if (currentLayout === 'classic') {
+                document.getElementById('publicLibraryOverlay').classList.remove('show');
+            }
         }
 
         document.getElementById('publicLibraryTrigger').addEventListener('click', openPublicLibraryPanel);
@@ -2127,6 +2428,7 @@
         function showAppScreen(user) {
             document.getElementById('authScreen').hidden = true;
             document.getElementById('appScreen').hidden = false;
+            showStudioPage('novo');
 
             const historyTrigger = document.getElementById('historyTrigger');
             const favoritesTrigger = document.getElementById('favoritesTrigger');
@@ -2134,6 +2436,7 @@
             const publicLibraryTrigger = document.getElementById('publicLibraryTrigger');
             const verifyBanner = document.getElementById('verifyEmailBanner');
             const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+            const configUserEmail = document.getElementById('configUserEmail');
 
             if (user) {
                 sessionStorage.removeItem(GUEST_FLAG_KEY);
@@ -2145,6 +2448,7 @@
                 document.getElementById('logoutBtnLabel').textContent = `Sair (${firstName})`;
                 verifyBanner.hidden = user.emailVerified;
                 deleteAccountBtn.hidden = false;
+                configUserEmail.textContent = user.email || user.displayName || 'Sua conta';
                 startHistoryListener(user.uid);
                 startFavoritesListener(user.uid);
                 startMySharesListener(user.uid);
@@ -2155,6 +2459,8 @@
                 sessionStorage.setItem(GUEST_FLAG_KEY, '1');
                 document.getElementById('planoBadge').hidden = true;
                 document.getElementById('assinarTrigger').hidden = true;
+                configUserEmail.textContent = 'Modo visitante';
+                document.getElementById('configPlanoText').textContent = 'Indisponível no modo visitante';
                 stopPlanoListener();
                 stopHistoryListener();
                 stopFavoritesListener();
@@ -2196,11 +2502,13 @@
         }
 
         function handleLogout() {
+            closeAppMenu();
             closeHistoryPanel();
             closeFavoritesPanel();
             closeMySharesPanel();
             closeSharedPromptPanel();
             closePublicLibraryPanel();
+            showStudioPage('novo');
             sessionStorage.removeItem(GUEST_FLAG_KEY);
             if (auth.currentUser) {
                 auth.signOut(); // o listener onAuthStateChanged cuida de voltar pra tela de login
@@ -2290,6 +2598,12 @@
                 // mantém o texto padrão do HTML nesse caso.
             }
         }
+
+        // Aplica a preferência de layout salva (Studio ou Clássico). Só chega
+        // aqui depois que toda variável de estado (histórico, favoritos, cache
+        // da biblioteca etc.) já foi declarada, então é seguro chamar as funções
+        // de start/stop dos listeners que o applyLayout aciona por baixo dos panos.
+        applyLayout(getLayoutPreference());
 
         auth.onAuthStateChanged((user) => {
             const pendingShareId = getShareIdFromUrl();

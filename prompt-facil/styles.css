@@ -1960,3 +1960,561 @@
     background: linear-gradient(90deg, var(--violet), var(--cyan));
     border-color: transparent;
 }
+
+/* ================================
+   Layout "Studio" da tela principal (migração do formato de card único
+   para barra lateral + páginas) — mantém a mesma paleta de cores dos
+   dois temas, só reorganiza onde cada coisa mora na tela.
+   ================================ */
+.app-shell {
+    max-width: 1180px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.app-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.app-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.app-brand-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--cyan), var(--violet));
+    color: var(--on-accent);
+    font-size: 15px;
+    flex-shrink: 0;
+}
+.app-brand-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    background: linear-gradient(120deg, var(--heading-start) 10%, var(--cyan) 55%, var(--violet) 95%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.studio-shell {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.studio-sidebar {
+    background: var(--surface);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    position: sticky;
+    top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.studio-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.nav-item {
+    width: 100%;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: none;
+    transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.nav-item:hover:not(:disabled) {
+    background: var(--hairline-soft-2);
+    color: var(--cyan);
+    transform: none;
+    box-shadow: none;
+    filter: none;
+}
+.nav-item.active {
+    background: rgba(0, 229, 255, 0.08);
+    border-color: rgba(0, 229, 255, 0.3);
+    color: var(--cyan);
+}
+.nav-item[hidden] {
+    display: none;
+}
+.nav-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.studio-sidebar .plano-badge {
+    margin-left: 0;
+    align-self: flex-start;
+}
+
+.studio-main {
+    min-width: 0;
+}
+.studio-page {
+    display: none;
+    background: var(--surface);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    padding: 32px 34px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-soft);
+    box-shadow:
+        0 0 0 1px rgba(var(--shadow-rgb), 0.2),
+        0 20px 60px rgba(var(--shadow-rgb), 0.5),
+        0 0 80px rgba(0, 229, 255, 0.06);
+}
+.studio-page.active {
+    display: block;
+    animation: studioPageIn 0.2s ease;
+}
+@keyframes studioPageIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+/* Páginas de listagem/config ficam mais legíveis um pouco mais estreitas
+   que a coluna toda — o mesmo tratamento do antigo .container (620px). */
+.studio-page[data-page="historico"],
+.studio-page[data-page="favoritos"],
+.studio-page[data-page="links"],
+.studio-page[data-page="biblioteca"],
+.studio-page[data-page="modelos"],
+.studio-page[data-page="config"] {
+    max-width: 680px;
+    margin: 0 auto;
+}
+.studio-page .page-header {
+    margin: -32px -34px 22px;
+    padding: 14px 20px;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.studio-page .history-list {
+    overflow-y: visible;
+    padding: 0;
+    max-height: none;
+}
+.page-intro {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+/* ---------- Acordeão "Modelos por profissão" ---------- */
+.profession-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.profession-card {
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--hairline-soft);
+    overflow: hidden;
+}
+.profession-header {
+    width: 100%;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14.5px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: none;
+}
+.profession-header:hover:not(:disabled) {
+    color: var(--cyan);
+    transform: none;
+    box-shadow: none;
+    filter: none;
+}
+.profession-header .chevron {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    color: var(--text-dim);
+    transition: transform 0.2s ease;
+}
+.profession-card.open .profession-header .chevron {
+    transform: rotate(180deg);
+}
+.tpl-body {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 16px 16px;
+}
+.profession-card.open .tpl-body {
+    display: flex;
+}
+.tpl-row {
+    width: 100%;
+    margin: 0;
+    padding: 11px 14px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    text-align: left;
+    box-shadow: none;
+}
+.tpl-row:hover:not(:disabled) {
+    border-color: var(--cyan);
+    color: var(--text-primary);
+    transform: none;
+    box-shadow: none;
+    filter: none;
+}
+.tpl-row.locked {
+    color: var(--text-dim);
+}
+
+/* ---------- Página "Configurações" ---------- */
+.settings-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin: 26px 0 10px;
+}
+.settings-title:first-child {
+    margin-top: 0;
+}
+.settings-title-danger {
+    color: var(--danger);
+}
+.settings-card {
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--hairline-soft);
+    padding: 4px 16px;
+}
+.settings-card-danger {
+    border-color: rgba(255, 92, 122, 0.25);
+}
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border-soft);
+}
+.settings-row:last-child {
+    border-bottom: none;
+}
+.settings-row strong {
+    display: block;
+    font-size: 13.5px;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+.settings-row p {
+    margin: 3px 0 0;
+    padding: 0;
+    text-align: left;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.4;
+}
+.settings-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: right;
+    max-width: 160px;
+    flex-shrink: 0;
+    line-height: 1.4;
+}
+.btn-ghost-small {
+    width: auto;
+    margin: 0;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--border-soft);
+    color: var(--text-secondary);
+    font-family: 'Inter', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    flex-shrink: 0;
+    box-shadow: none;
+    text-decoration: none;
+    display: inline-block;
+}
+.btn-ghost-small:hover:not(:disabled) {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    transform: none;
+    box-shadow: none;
+    filter: none;
+}
+.btn-danger-small {
+    width: auto;
+    margin: 0;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    font-family: 'Inter', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    flex-shrink: 0;
+    box-shadow: none;
+}
+.btn-danger-small:hover:not(:disabled) {
+    background: var(--danger);
+    color: var(--on-accent);
+    transform: none;
+    box-shadow: none;
+    filter: none;
+}
+.btn-danger-small[hidden] {
+    display: none;
+}
+.settings-feedback {
+    margin-top: 22px;
+    text-align: center;
+    font-size: 12px;
+}
+.settings-feedback a {
+    color: var(--text-dim);
+    text-decoration: underline;
+}
+.settings-feedback a:hover {
+    color: var(--cyan);
+}
+
+/* ---------- Responsivo — sidebar vira barra horizontal no celular ---------- */
+@media (max-width: 860px) {
+    .studio-shell {
+        grid-template-columns: 1fr;
+    }
+    .studio-sidebar {
+        position: static;
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 10px;
+    }
+    .studio-nav {
+        flex-direction: row;
+        flex: 1;
+    }
+    .nav-item {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    .studio-sidebar .plano-badge {
+        flex-shrink: 0;
+    }
+    .studio-page {
+        padding: 26px 20px;
+    }
+    .studio-page .page-header {
+        margin: -26px -20px 20px;
+    }
+}
+@media (max-width: 480px) {
+    .app-shell {
+        padding: 0 2px;
+    }
+    .settings-row {
+        flex-wrap: wrap;
+    }
+    .settings-hint {
+        max-width: none;
+        text-align: left;
+    }
+}
+
+/* ================================
+   Alternância Studio / Clássico (feature nova)
+   ================================ */
+.sidebar-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.sidebar-bottom .plano-badge {
+    margin-left: 0;
+}
+
+.layout-toggle-switch {
+    position: relative;
+    width: 54px;
+    height: 30px;
+    min-width: 54px;
+    padding: 0;
+    margin: 0;
+    background: var(--input-bg);
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: none;
+    flex-shrink: 0;
+}
+.layout-toggle-switch:hover:not(:disabled) {
+    border-color: var(--cyan);
+    transform: none;
+    box-shadow: none;
+    filter: none;
+}
+.layout-toggle-knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(120deg, var(--cyan) 0%, var(--violet) 100%);
+    box-shadow: 0 2px 6px rgba(var(--shadow-rgb), 0.4);
+    transition: transform 0.25s ease;
+}
+.layout-toggle-switch[aria-checked="true"] .layout-toggle-knob {
+    transform: translateX(24px);
+}
+.layout-toggle-knob svg {
+    width: 14px;
+    height: 14px;
+    stroke: var(--on-accent);
+    fill: none;
+    stroke-width: 2;
+}
+.layout-toggle-knob .layout-icon-studio {
+    display: none;
+}
+.layout-toggle-knob .layout-icon-classic {
+    display: block;
+}
+.layout-toggle-switch[aria-checked="true"] .layout-toggle-knob .layout-icon-studio {
+    display: block;
+}
+.layout-toggle-switch[aria-checked="true"] .layout-toggle-knob .layout-icon-classic {
+    display: none;
+}
+
+/* Botões compartilhados (historyTrigger, favoritesTrigger etc.) usam a classe
+   .nav-item mesmo quando "moram" dentro do dropdown clássico — esse ajuste
+   deixa o tamanho/fonte compatíveis com os outros itens do menu ☰. */
+.app-menu-dropdown .nav-item {
+    font-size: 13px;
+}
+.app-menu-dropdown .nav-item .nav-icon {
+    color: inherit;
+}
+
+.layout-picker {
+    margin-bottom: 18px;
+}
+.layout-picker-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-align: center;
+    margin-bottom: 8px;
+}
+.layout-picker-options {
+    display: flex;
+    gap: 8px;
+}
+.layout-picker-btn {
+    flex: 1;
+    width: auto;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    box-shadow: none;
+}
+.layout-picker-btn:hover:not(:disabled) {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    transform: none;
+    box-shadow: none;
+    filter: none;
+}
+.layout-picker-btn.is-active {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    background: rgba(0, 229, 255, 0.08);
+}
+.layout-picker-btn .nav-icon {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
