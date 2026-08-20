@@ -1151,7 +1151,7 @@
     opacity: 1;
     visibility: visible;
 }
-#privacyOverlay {
+#privacyOverlay, #termsOverlay {
     position: fixed;
     inset: 0;
     background: var(--modal-backdrop);
@@ -1165,11 +1165,11 @@
     transition: opacity 0.25s ease, visibility 0.25s ease;
     z-index: 1300;
 }
-#privacyOverlay.show {
+#privacyOverlay.show, #termsOverlay.show {
     opacity: 1;
     visibility: visible;
 }
-#privacyPanel {
+#privacyPanel, #termsPanel {
     width: min(94vw, 760px);
     height: min(88vh, 780px);
     display: flex;
@@ -1180,7 +1180,7 @@
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(var(--shadow-rgb), 0.6), 0 0 40px rgba(0, 229, 255, 0.08);
 }
-#privacyFrame {
+#privacyFrame, #termsFrame {
     flex: 1;
     width: 100%;
     border: 0;
@@ -2340,6 +2340,252 @@
     color: var(--cyan);
 }
 
+/* ---------- Configurações: componentes novos ---------- */
+.settings-card-nested {
+    margin-top: -8px;
+    margin-bottom: 20px;
+    padding: 14px 16px;
+}
+.settings-subtitle {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+.settings-empty-note {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--text-dim);
+}
+.settings-note {
+    margin: 10px 0 6px;
+    padding: 0;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--text-dim);
+}
+.settings-inline-status {
+    min-height: 14px;
+    margin: 8px 0 0;
+    font-size: 11px;
+    color: var(--mint, #39ffb0);
+    text-align: right;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.settings-inline-status.show {
+    opacity: 1;
+}
+.settings-inline-edit {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.settings-inline-edit input[type="text"] {
+    width: auto;
+    max-width: 160px;
+    margin: 0;
+    padding: 8px 10px;
+    font-size: 12.5px;
+}
+.settings-hint-badge {
+    padding: 4px 10px;
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    max-width: none;
+    text-align: center;
+}
+
+/* Select usado dentro das linhas de configuração — mais compacto que o formulário principal */
+.settings-select {
+    width: auto;
+    min-width: 160px;
+    max-width: 220px;
+    margin: 0;
+    padding: 8px 32px 8px 12px;
+    font-size: 12.5px;
+    flex-shrink: 0;
+}
+
+/* Toggle switch genérico (Salvar histórico, Notificações, Beta) */
+.switch {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+.switch input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+.switch-track {
+    width: 40px;
+    height: 22px;
+    border-radius: 999px;
+    background: var(--border-soft);
+    border: 1px solid var(--border-soft);
+    display: inline-flex;
+    align-items: center;
+    padding: 2px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.switch-knob {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+.switch input:checked + .switch-track {
+    background: rgba(0, 229, 255, 0.25);
+    border-color: var(--cyan);
+}
+.switch input:checked + .switch-track .switch-knob {
+    transform: translateX(18px);
+    background: var(--cyan);
+}
+.switch input:focus-visible + .switch-track {
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+}
+
+/* Grupo de opções de tema (Claro / Escuro / Sistema) */
+.theme-option-group {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.theme-option-btn {
+    width: auto;
+    margin: 0;
+    padding: 7px 12px;
+    background: transparent;
+    border: 1px solid var(--border-soft);
+    color: var(--text-secondary);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    box-shadow: none;
+}
+.theme-option-btn:hover:not(:disabled) {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    transform: none;
+    box-shadow: none;
+    filter: none;
+}
+.theme-option-btn.is-active {
+    background: rgba(0, 229, 255, 0.12);
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+
+/* Histórico de pagamentos */
+.payment-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.payment-history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    font-size: 12.5px;
+}
+.payment-history-item .payment-date {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+.payment-history-item .payment-value {
+    color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+}
+.payment-status {
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+}
+.payment-status.confirmado {
+    background: rgba(57, 255, 176, 0.14);
+    color: var(--mint, #39ffb0);
+}
+.payment-status.atrasado, .payment-status.cancelado {
+    background: rgba(255, 92, 122, 0.14);
+    color: var(--danger);
+}
+
+/* FAQ (Central de ajuda) */
+.faq-panel {
+    margin: 4px 0 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.faq-item {
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+.faq-question {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: none;
+    text-transform: none;
+    letter-spacing: 0;
+    margin: 0;
+}
+.faq-question:hover {
+    background: var(--hairline-soft);
+    transform: none;
+    box-shadow: none;
+    filter: none;
+}
+.faq-icon {
+    flex-shrink: 0;
+    color: var(--cyan);
+    transition: transform 0.2s ease;
+}
+.faq-item.open .faq-icon {
+    transform: rotate(180deg);
+}
+.faq-answer {
+    display: none;
+    padding: 0 14px 14px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+}
+.faq-item.open .faq-answer {
+    display: block;
+}
+
 /* ---------- Responsivo — sidebar vira barra horizontal no celular ---------- */
 @media (max-width: 860px) {
     .studio-shell {
@@ -2389,10 +2635,40 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
     gap: 8px;
 }
 .sidebar-bottom .plano-badge {
     margin-left: 0;
+}
+.sidebar-toggles {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.sidebar-toggles .theme-toggle-switch,
+.sidebar-toggles .layout-toggle-switch {
+    width: 44px;
+    height: 26px;
+    min-width: 44px;
+}
+.sidebar-toggles .theme-toggle-knob,
+.sidebar-toggles .layout-toggle-knob {
+    width: 20px;
+    height: 20px;
+}
+[data-theme="light"] .sidebar-toggles .theme-toggle-knob {
+    transform: translateX(18px);
+}
+.sidebar-toggles .layout-toggle-switch[aria-checked="true"] .layout-toggle-knob {
+    transform: translateX(18px);
+}
+.sidebar-toggles .theme-toggle-knob span,
+.sidebar-toggles .layout-toggle-knob svg {
+    font-size: 11px;
+    width: 12px;
+    height: 12px;
 }
 
 .layout-toggle-switch {

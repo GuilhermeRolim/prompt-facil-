@@ -1,32 +1,81 @@
         // ---------- Modo claro / escuro ----------
         // O tema salvo já é aplicado antes do paint por um script inline no <head>
         // (evita o "flash" do tema errado). Aqui só cuidamos da troca em tempo real.
+        // A preferência pode ser 'light', 'dark' ou 'system' (acompanha o SO).
         const THEME_KEY = 'promptFacil.theme';
+        let themeMediaQuery = null;
 
-        function applyTheme(theme) {
-            if (theme === 'light') {
+        function getThemePreference() {
+            try {
+                return localStorage.getItem(THEME_KEY) || 'system';
+            } catch (e) {
+                return 'system';
+            }
+        }
+
+        // Traduz a preferência ('system' incluso) no tema de fato aplicado ('light'/'dark').
+        function resolveTheme(pref) {
+            if (pref === 'light' || pref === 'dark') return pref;
+            return (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+        }
+
+        function applyResolvedTheme(resolved) {
+            if (resolved === 'light') {
                 document.documentElement.setAttribute('data-theme', 'light');
             } else {
                 document.documentElement.removeAttribute('data-theme');
             }
+            const switchBtn = document.getElementById('themeToggleApp');
+            if (switchBtn) switchBtn.setAttribute('aria-checked', String(resolved === 'light'));
         }
 
         function getCurrentTheme() {
             return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
         }
 
-        function toggleTheme() {
-            const next = getCurrentTheme() === 'light' ? 'dark' : 'light';
-            applyTheme(next);
-            const switchBtn = document.getElementById('themeToggleApp');
-            if (switchBtn) switchBtn.setAttribute('aria-checked', String(next === 'light'));
-            try {
-                localStorage.setItem(THEME_KEY, next);
-            } catch (e) {
-                // localStorage indisponível (modo privado/restrições) — o tema ainda
-                // funciona nesta sessão, só não é lembrado na próxima visita.
-            }
+        function updateThemeOptionButtons(pref) {
+            document.querySelectorAll('.theme-option-btn').forEach((btn) => {
+                const isActive = btn.dataset.themeChoice === pref;
+                btn.classList.toggle('is-active', isActive);
+                btn.setAttribute('aria-pressed', String(isActive));
+            });
         }
+
+        // Enquanto a preferência for "Sistema", escuta mudanças ao vivo (ex.: a pessoa
+        // muda o tema do celular com o app aberto) e atualiza sem precisar recarregar.
+        function watchSystemTheme(shouldWatch) {
+            if (!window.matchMedia) return;
+            if (!themeMediaQuery) themeMediaQuery = window.matchMedia('(prefers-color-scheme: light)');
+            themeMediaQuery.onchange = shouldWatch ? () => applyResolvedTheme(resolveTheme('system')) : null;
+        }
+
+        function setThemePreference(pref) {
+            try {
+                localStorage.setItem(THEME_KEY, pref);
+            } catch (e) {
+                // localStorage indisponível — a escolha vale só pra essa sessão.
+            }
+            applyResolvedTheme(resolveTheme(pref));
+            updateThemeOptionButtons(pref);
+            watchSystemTheme(pref === 'system');
+        }
+
+        function toggleTheme() {
+            // Alternância rápida (switch da barra lateral/tela de login): define um
+            // tema explícito, saindo do modo "Sistema" se ele estiver ativo.
+            const next = getCurrentTheme() === 'light' ? 'dark' : 'light';
+            setThemePreference(next);
+        }
+
+        // Aplica a preferência salva assim que o script carrega (o <head> já cuidou
+        // do primeiro paint — isso aqui sincroniza os botões/switches e liga o
+        // acompanhamento ao vivo do tema do sistema, se for o caso).
+        (function initTheme() {
+            const pref = getThemePreference();
+            applyResolvedTheme(resolveTheme(pref));
+            updateThemeOptionButtons(pref);
+            watchSystemTheme(pref === 'system');
+        })();
 
         // ---------- Layout Studio ou Clássico (feature nova) ----------
         // A pessoa escolhe um dos dois formatos (tela de login ou pelo botão na
@@ -60,12 +109,12 @@
             document.getElementById('studioLayout').hidden = !isStudio;
             document.getElementById('classicLayout').hidden = isStudio;
 
-            const studioToolbar = document.querySelector('#studioLayout .app-toolbar');
             const studioShell = document.getElementById('studioShell');
             const studioNav = document.querySelector('.studio-nav');
             const studioModelosBtn = document.querySelector('.nav-item[data-page="modelos"]');
             const studioConfigBtn = document.querySelector('.nav-item[data-page="config"]');
             const studioSidebarBottom = document.querySelector('.sidebar-bottom');
+            const studioSidebarToggles = document.querySelector('.sidebar-toggles');
             const studioNovoPage = document.querySelector('.studio-page[data-page="novo"]');
             const studioHistoricoPage = document.querySelector('.studio-page[data-page="historico"]');
             const studioFavoritosPage = document.querySelector('.studio-page[data-page="favoritos"]');
@@ -113,11 +162,11 @@
                 studioFavoritosPage.appendChild(sharedFavoritesBlock);
                 studioLinksPage.appendChild(mySharesListEl);
                 studioBibliotecaPage.appendChild(sharedLibraryBlock);
-                studioSidebarBottom.insertBefore(planoBadgeEl, document.getElementById('layoutToggleStudio'));
+                studioSidebarBottom.insertBefore(planoBadgeEl, studioSidebarToggles);
                 studioShell.parentNode.insertBefore(verifyBannerEl, studioShell);
                 configLogoutRow.appendChild(logoutBtnEl);
                 configDeleteRow.appendChild(deleteAccountBtnEl);
-                studioToolbar.appendChild(themeToggleEl);
+                studioSidebarToggles.insertBefore(themeToggleEl, document.getElementById('layoutToggleStudio'));
                 studioNav.insertBefore(historyTriggerEl, studioModelosBtn);
                 studioNav.insertBefore(favoritesTriggerEl, studioModelosBtn);
                 studioNav.insertBefore(mySharesTriggerEl, studioConfigBtn);
@@ -149,6 +198,8 @@
                 mySharesPanelEl.appendChild(mySharesListEl);
                 publicLibraryPanelEl.appendChild(sharedLibraryBlock);
             }
+
+            document.getElementById('templatesBox').hidden = isStudio;
 
             document.querySelectorAll('.layout-toggle-switch').forEach((btn) => {
                 btn.setAttribute('aria-checked', String(isStudio));
@@ -419,6 +470,128 @@
         buildCustomSelect(document.getElementById('category'));
         buildCustomSelect(document.getElementById('depthLevel'));
         buildCustomSelect(document.getElementById('aiTarget'));
+
+        // ---------- Preferências do gerador (Configurações > Preferências) ----------
+        // Visitantes: guardadas no localStorage do aparelho.
+        // Contas logadas: guardadas em users/{uid}.prefs no Firestore (sincroniza
+        // entre dispositivos, como o histórico) — carregadas pelo mesmo listener
+        // que já observa o plano da conta, pra não duplicar leituras.
+        const PREFS_LOCAL_KEY = 'promptFacil.prefs';
+        const DEFAULT_PREFS = {
+            defaultAiTarget: '',
+            defaultCategory: 'pesquisa',
+            defaultDepth: 'intermediario',
+            autoSaveHistory: true,
+            emailNews: false,
+            emailBilling: false,
+            betaOptIn: false
+        };
+        let currentPrefs = Object.assign({}, DEFAULT_PREFS);
+        let prefsAppliedFromServer = false;
+
+        function getLocalPrefs() {
+            try {
+                const raw = localStorage.getItem(PREFS_LOCAL_KEY);
+                return raw ? Object.assign({}, DEFAULT_PREFS, JSON.parse(raw)) : Object.assign({}, DEFAULT_PREFS);
+            } catch (e) {
+                return Object.assign({}, DEFAULT_PREFS);
+            }
+        }
+
+        function setLocalPrefs(prefs) {
+            try {
+                localStorage.setItem(PREFS_LOCAL_KEY, JSON.stringify(prefs));
+            } catch (e) {
+                // localStorage indisponível — a preferência vale só pra essa sessão.
+            }
+        }
+
+        function readPrefsFromForm() {
+            return {
+                defaultAiTarget: document.getElementById('prefDefaultAiTarget').value,
+                defaultCategory: document.getElementById('prefDefaultCategory').value,
+                defaultDepth: document.getElementById('prefDefaultDepth').value,
+                autoSaveHistory: document.getElementById('prefAutoSaveHistory').checked,
+                emailNews: document.getElementById('prefEmailNews').checked,
+                emailBilling: document.getElementById('prefEmailBilling').checked,
+                betaOptIn: document.getElementById('prefBetaOptIn').checked
+            };
+        }
+
+        // Reflete as preferências carregadas nos campos da página de Configurações
+        // e aplica os padrões (categoria/profundidade) no formulário "Novo prompt".
+        function applyLoadedPreferences(prefs) {
+            const merged = Object.assign({}, DEFAULT_PREFS, prefs || {});
+            currentPrefs = merged;
+
+            const aiTargetSel = document.getElementById('prefDefaultAiTarget');
+            const categorySel = document.getElementById('prefDefaultCategory');
+            const depthSel = document.getElementById('prefDefaultDepth');
+            if (aiTargetSel) aiTargetSel.value = merged.defaultAiTarget;
+            if (categorySel) categorySel.value = merged.defaultCategory;
+            if (depthSel) depthSel.value = merged.defaultDepth;
+
+            const autoSaveEl = document.getElementById('prefAutoSaveHistory');
+            const emailNewsEl = document.getElementById('prefEmailNews');
+            const emailBillingEl = document.getElementById('prefEmailBilling');
+            const betaEl = document.getElementById('prefBetaOptIn');
+            if (autoSaveEl) autoSaveEl.checked = merged.autoSaveHistory;
+            if (emailNewsEl) emailNewsEl.checked = merged.emailNews;
+            if (emailBillingEl) emailBillingEl.checked = merged.emailBilling;
+            if (betaEl) betaEl.checked = merged.betaOptIn;
+
+            applyDefaultsToForm(merged);
+        }
+
+        // Só mexe em categoria/profundidade — nunca na descrição ou nos detalhes,
+        // que são texto livre da pessoa e não devem ser sobrescritos.
+        function applyDefaultsToForm(prefs) {
+            const categoryEl = document.getElementById('category');
+            const depthEl = document.getElementById('depthLevel');
+            if (categoryEl && prefs.defaultCategory) {
+                categoryEl.value = prefs.defaultCategory;
+                refreshCustomSelect('category');
+                updateDynamicFields();
+            }
+            if (depthEl && prefs.defaultDepth) {
+                depthEl.value = prefs.defaultDepth;
+                refreshCustomSelect('depthLevel');
+            }
+        }
+
+        function savePreferences() {
+            const prefs = readPrefsFromForm();
+            currentPrefs = prefs;
+            applyDefaultsToForm(prefs);
+
+            const user = auth.currentUser;
+            if (user) {
+                db.collection('users').doc(user.uid).set({ prefs }, { merge: true })
+                    .then(showPrefsSavedFeedback)
+                    .catch((err) => {
+                        console.error('Não foi possível salvar as preferências:', err);
+                        showErrorToast('> não foi possível salvar as preferências agora_');
+                    });
+            } else {
+                setLocalPrefs(prefs);
+                showPrefsSavedFeedback();
+            }
+        }
+
+        let prefsSavedTimeout = null;
+        function showPrefsSavedFeedback() {
+            const status = document.getElementById('prefsSaveStatus');
+            if (!status) return;
+            status.textContent = 'Preferências salvas ✓';
+            status.classList.add('show');
+            clearTimeout(prefsSavedTimeout);
+            prefsSavedTimeout = setTimeout(() => status.classList.remove('show'), 2200);
+        }
+
+        // Aplica o que já está salvo no aparelho assim que o script carrega — cobre o
+        // modo visitante de imediato, e serve de valor inicial até o Firestore
+        // confirmar as preferências de quem estiver logado (ver startPlanoListener).
+        applyLoadedPreferences(getLocalPrefs());
 
         // ---------- Templates por profissão (feature nova) ----------
         // Cada profissão tem alguns modelos prontos: escolher um pré-preenche
@@ -864,14 +1037,16 @@
             promptField.value = prompt;
             autoGrowPromptText();
             setCustomSelectDisabled('aiTarget', false);
-            document.getElementById('aiTarget').value = '';
+            document.getElementById('aiTarget').value = currentPrefs.defaultAiTarget || '';
             refreshCustomSelect('aiTarget');
-            document.getElementById('openAiButton').disabled = true;
+            handleAiTargetChange();
             document.getElementById('favoritePromptButton').disabled = false;
             document.getElementById('sharePromptButton').disabled = false;
             setFavoriteButtonBusy(false);
 
-            saveToHistory({ category, description, prompt });
+            if (currentPrefs.autoSaveHistory !== false) {
+                saveToHistory({ category, description, prompt });
+            }
         }
 
         // Serviços com suporte a preenchimento automático via URL (?q=) usam o prompt
@@ -1093,6 +1268,10 @@
         // JavaScript do navegador não funciona.
         let currentPlano = 'gratis';
         let planoUnsubscribe = null;
+        // Guardados aqui pra alimentar a seção "Assinatura" da página de Configurações,
+        // sem precisar de outro listener separado no Firestore.
+        let ultimoPagamentoConfirmadoEm = null;
+        let assinaturaAtiva = false;
 
         function isPremium() {
             return currentPlano === 'premium';
@@ -1102,15 +1281,25 @@
             stopPlanoListener();
             planoUnsubscribe = db.collection('users').doc(uid)
                 .onSnapshot((doc) => {
-                    const novoPlano = (doc.exists && doc.data().plano === 'premium') ? 'premium' : 'gratis';
+                    const data = doc.exists ? doc.data() : {};
+                    const novoPlano = data.plano === 'premium' ? 'premium' : 'gratis';
                     const mudou = novoPlano !== currentPlano;
                     currentPlano = novoPlano;
+                    ultimoPagamentoConfirmadoEm = data.ultimoPagamentoConfirmadoEm || null;
+                    assinaturaAtiva = !!data.asaasSubscriptionId;
                     updatePlanoBadge();
                     // Se o plano mudou (ex.: alguém acabou de virar premium), reflete
                     // isso na lista de modelos por profissão, que depende do plano.
                     if (mudou) {
                         updateTemplateOptions();
                         renderProfessionTemplatesPage();
+                    }
+                    // Preferências do Firestore só são aplicadas uma vez por login —
+                    // depois disso, savePreferences() já mantém tudo em sincronia, e
+                    // reaplicar a cada snapshot atropelaria edições em andamento.
+                    if (!prefsAppliedFromServer) {
+                        applyLoadedPreferences(data.prefs || {});
+                        prefsAppliedFromServer = true;
                     }
                 }, (err) => {
                     console.error('Não foi possível verificar o plano da conta:', err);
@@ -1123,6 +1312,10 @@
                 planoUnsubscribe = null;
             }
             currentPlano = 'gratis';
+            ultimoPagamentoConfirmadoEm = null;
+            assinaturaAtiva = false;
+            prefsAppliedFromServer = false;
+            applyLoadedPreferences(getLocalPrefs());
             updatePlanoBadge();
         }
 
@@ -1140,6 +1333,125 @@
             if (configPlanoText && auth.currentUser) {
                 configPlanoText.textContent = isPremium() ? 'Premium' : 'Grátis';
             }
+
+            const manageBtn = document.getElementById('configManageSubscriptionBtn');
+            if (manageBtn) {
+                manageBtn.textContent = isPremium() ? 'Cancelar assinatura' : 'Assinar Premium';
+                manageBtn.classList.toggle('btn-danger-small', isPremium());
+                manageBtn.classList.toggle('btn-ghost-small', !isPremium());
+            }
+
+            const detalhesRow = document.getElementById('configPlanoDetalhesRow');
+            const detalhesText = document.getElementById('configPlanoDetalhes');
+            const paymentCard = document.getElementById('configPaymentHistoryCard');
+            if (detalhesRow && detalhesText) {
+                if (isPremium() && ultimoPagamentoConfirmadoEm && typeof ultimoPagamentoConfirmadoEm.toDate === 'function') {
+                    const confirmadoEm = ultimoPagamentoConfirmadoEm.toDate();
+                    const proximaCobranca = new Date(confirmadoEm);
+                    proximaCobranca.setMonth(proximaCobranca.getMonth() + 1);
+                    const fmt = (d) => d.toLocaleDateString('pt-BR');
+                    detalhesText.textContent = assinaturaAtiva
+                        ? `Último pagamento confirmado em ${fmt(confirmadoEm)} — próxima cobrança prevista para ${fmt(proximaCobranca)} (estimativa, ciclo mensal).`
+                        : `Último pagamento confirmado em ${fmt(confirmadoEm)}. Assinatura não está mais ativa.`;
+                    detalhesRow.hidden = false;
+                } else {
+                    detalhesRow.hidden = true;
+                }
+                if (paymentCard) paymentCard.hidden = !auth.currentUser;
+            }
+        }
+
+        // ---------- Gerenciar assinatura (Configurações > Assinatura) ----------
+        function handleManageSubscription() {
+            if (!auth.currentUser) {
+                showErrorToast('> crie uma conta (ou entre) para assinar o premium_');
+                return;
+            }
+            if (isPremium()) {
+                handleCancelSubscription();
+            } else {
+                openAssinarPanel();
+            }
+        }
+
+        async function handleCancelSubscription() {
+            const confirmado = window.confirm(
+                'Cancelar sua assinatura Premium? Você perde o acesso aos recursos premium imediatamente. ' +
+                'Essa ação não pode ser desfeita — para assinar de novo, será preciso gerar um novo Pix.'
+            );
+            if (!confirmado) return;
+
+            const btn = document.getElementById('configManageSubscriptionBtn');
+            const textoOriginal = btn ? btn.textContent : '';
+            if (btn) { btn.disabled = true; btn.textContent = 'Cancelando...'; }
+
+            try {
+                const cancelarAssinatura = functionsRegion.httpsCallable('cancelarAssinatura');
+                await cancelarAssinatura();
+                showErrorToast('&gt; assinatura cancelada_');
+            } catch (err) {
+                console.error('Erro ao cancelar assinatura:', err);
+                showErrorToast('> não foi possível cancelar agora (' + (err.message || 'tente de novo em instantes') + ')_');
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = textoOriginal; }
+            }
+        }
+
+        // ---------- Histórico de pagamentos (Configurações > Assinatura) ----------
+        // Alimentado pela subcoleção users/{uid}/pagamentos, escrita pela Cloud
+        // Function webhookAsaas a cada evento de cobrança — o app só lê.
+        let paymentHistoryUnsubscribe = null;
+
+        const PAYMENT_STATUS_LABELS = {
+            CONFIRMED: { label: 'Confirmado', cls: 'confirmado' },
+            RECEIVED: { label: 'Confirmado', cls: 'confirmado' },
+            OVERDUE: { label: 'Atrasado', cls: 'atrasado' },
+            DELETED: { label: 'Cancelado', cls: 'cancelado' },
+            REFUNDED: { label: 'Estornado', cls: 'cancelado' }
+        };
+
+        function startPaymentHistoryListener(uid) {
+            stopPaymentHistoryListener();
+            paymentHistoryUnsubscribe = db.collection('users').doc(uid).collection('pagamentos')
+                .orderBy('confirmadoEm', 'desc')
+                .limit(12)
+                .onSnapshot((snap) => {
+                    renderPaymentHistory(snap.docs.map((d) => d.data()));
+                }, (err) => {
+                    console.error('Não foi possível carregar o histórico de pagamentos:', err);
+                });
+        }
+
+        function stopPaymentHistoryListener() {
+            if (paymentHistoryUnsubscribe) {
+                paymentHistoryUnsubscribe();
+                paymentHistoryUnsubscribe = null;
+            }
+        }
+
+        function renderPaymentHistory(pagamentos) {
+            const container = document.getElementById('configPaymentHistory');
+            if (!container) return;
+            if (!pagamentos || pagamentos.length === 0) {
+                container.innerHTML = '<p class="settings-empty-note">Nenhum pagamento confirmado ainda.</p>';
+                return;
+            }
+            container.innerHTML = pagamentos.map((p) => {
+                const status = PAYMENT_STATUS_LABELS[p.status] || { label: p.status || '—', cls: 'atrasado' };
+                const data = p.confirmadoEm && typeof p.confirmadoEm.toDate === 'function'
+                    ? p.confirmadoEm.toDate().toLocaleDateString('pt-BR')
+                    : '—';
+                const valor = typeof p.valor === 'number'
+                    ? p.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                    : '—';
+                return `
+                    <div class="payment-history-item">
+                        <span class="payment-date">${data}</span>
+                        <span class="payment-value">${valor}</span>
+                        <span class="payment-status ${status.cls}">${status.label}</span>
+                    </div>
+                `;
+            }).join('');
         }
 
         // ================================
@@ -2214,13 +2526,36 @@
         document.getElementById('privacyOverlay').addEventListener('click', (e) => {
             if (e.target.id === 'privacyOverlay') closePrivacyModal();
         });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closePrivacyModal();
-        });
         // Permite que o link "← Voltar" dentro do iframe feche o painel em vez de navegar
         window.addEventListener('message', (e) => {
             if (e.source === document.getElementById('privacyFrame').contentWindow && e.data === 'closePrivacyModal') {
                 closePrivacyModal();
+            }
+            if (e.source === document.getElementById('termsFrame').contentWindow && e.data === 'closeTermsModal') {
+                closeTermsModal();
+            }
+        });
+
+        function openTermsModal(e) {
+            if (e && (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1)) return true;
+            if (e) e.preventDefault();
+            const frame = document.getElementById('termsFrame');
+            if (!frame.getAttribute('src')) frame.setAttribute('src', 'termos-de-uso.html');
+            document.getElementById('termsOverlay').classList.add('show');
+            return false;
+        }
+
+        function closeTermsModal() {
+            document.getElementById('termsOverlay').classList.remove('show');
+        }
+
+        document.getElementById('termsOverlay').addEventListener('click', (e) => {
+            if (e.target.id === 'termsOverlay') closeTermsModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closePrivacyModal();
+                closeTermsModal();
             }
         });
 
@@ -2453,6 +2788,7 @@
                 startFavoritesListener(user.uid);
                 startMySharesListener(user.uid);
                 startPlanoListener(user.uid);
+                startPaymentHistoryListener(user.uid);
                 updateSyncStatus();
             } else {
                 // Modo visitante: sem conta, sem histórico/favoritos/links/biblioteca sincronizados, nada pra excluir.
@@ -2462,6 +2798,7 @@
                 configUserEmail.textContent = 'Modo visitante';
                 document.getElementById('configPlanoText').textContent = 'Indisponível no modo visitante';
                 stopPlanoListener();
+                stopPaymentHistoryListener();
                 stopHistoryListener();
                 stopFavoritesListener();
                 stopMySharesListener();
@@ -2478,6 +2815,238 @@
                 closeMySharesPanel();
                 closePublicLibraryPanel();
                 document.getElementById('logoutBtnLabel').textContent = 'Sair do modo visitante';
+            }
+
+            renderConfigPage(user);
+        }
+
+        // ---------- Página de Configurações: partes que não são plano/preferências ----------
+        // (plano vem do startPlanoListener, preferências do applyLoadedPreferences —
+        // aqui só o que depende diretamente de "logado ou não" e de dados estáticos.)
+        const APP_VERSION = '1.0.0';
+
+        // Preencha com os links reais assim que o app for publicado nas lojas.
+        const STORE_URLS = {
+            android: '',
+            ios: ''
+        };
+
+        function renderConfigPage(user) {
+            const nameRow = document.getElementById('configNameRow');
+            const passwordRow = document.getElementById('configPasswordRow');
+            const exportRow = document.getElementById('configExportRow');
+            const notificationsSection = document.getElementById('configNotificationsSection');
+            const securitySection = document.getElementById('configSecuritySection');
+            const futureSection = document.getElementById('configFutureSection');
+            const nameInput = document.getElementById('configDisplayName');
+            const versionEl = document.getElementById('configAppVersion');
+
+            const isLoggedIn = !!user;
+            [nameRow, passwordRow, exportRow, notificationsSection, securitySection, futureSection].forEach((el) => {
+                if (el) el.hidden = !isLoggedIn;
+            });
+
+            if (versionEl) versionEl.textContent = `${APP_VERSION} — Prompt Fácil`;
+
+            if (isLoggedIn) {
+                if (nameInput) nameInput.value = user.displayName || '';
+                if (document.getElementById('configPasswordStatus')) {
+                    document.getElementById('configPasswordStatus').textContent =
+                        'Enviamos um link por email para ' + (user.email || 'sua conta') + ' pra trocar a senha.';
+                }
+                renderSessionInfo(user);
+            }
+        }
+
+        // Informação da sessão atual — não é um gerenciador completo de dispositivos,
+        // só um resumo honesto do que dá pra saber a partir do navegador: quando foi
+        // o último login e em que tipo de aparelho/navegador.
+        function renderSessionInfo(user) {
+            const el = document.getElementById('configSessionInfo');
+            if (!el) return;
+            const lastLogin = user.metadata && user.metadata.lastSignInTime
+                ? new Date(user.metadata.lastSignInTime).toLocaleString('pt-BR')
+                : 'não disponível';
+            el.textContent = `Último acesso: ${lastLogin} — ${describeUserAgent()}.`;
+        }
+
+        function describeUserAgent() {
+            const ua = navigator.userAgent || '';
+            let so = 'dispositivo desconhecido';
+            if (/Android/i.test(ua)) so = 'Android';
+            else if (/iPhone|iPad|iPod/i.test(ua)) so = 'iOS';
+            else if (/Windows/i.test(ua)) so = 'Windows';
+            else if (/Macintosh/i.test(ua)) so = 'Mac';
+            else if (/Linux/i.test(ua)) so = 'Linux';
+
+            let navegador = 'navegador desconhecido';
+            if (/Edg\//i.test(ua)) navegador = 'Edge';
+            else if (/Chrome\//i.test(ua) && !/Edg\//i.test(ua)) navegador = 'Chrome';
+            else if (/Firefox\//i.test(ua)) navegador = 'Firefox';
+            else if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) navegador = 'Safari';
+
+            return `${navegador} em ${so}`;
+        }
+
+        // ---------- Conta: nome de exibição ----------
+        async function handleSaveDisplayName() {
+            const user = auth.currentUser;
+            if (!user) return;
+            const input = document.getElementById('configDisplayName');
+            const status = document.getElementById('configNameStatus');
+            const btn = document.getElementById('configSaveNameBtn');
+            const nome = input.value.trim();
+
+            if (!nome) {
+                if (status) status.textContent = 'Digite um nome antes de salvar.';
+                return;
+            }
+
+            btn.disabled = true;
+            const textoOriginal = btn.textContent;
+            btn.textContent = 'Salvando...';
+            try {
+                await user.updateProfile({ displayName: nome });
+                await db.collection('users').doc(user.uid).set({ name: nome }, { merge: true });
+                if (status) status.textContent = 'Nome atualizado ✓';
+                const firstName = nome.split(' ')[0];
+                document.getElementById('logoutBtnLabel').textContent = `Sair (${firstName})`;
+            } catch (err) {
+                console.error('Não foi possível salvar o nome:', err);
+                if (status) status.textContent = 'Não foi possível salvar agora — tente de novo.';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
+            }
+        }
+
+        // ---------- Conta: trocar senha ----------
+        // Reaproveita o mesmo fluxo de "esqueci minha senha" da tela de login —
+        // é o jeito mais simples e seguro (a pessoa confirma no próprio email,
+        // sem o app precisar pedir a senha atual dentro do painel).
+        async function handleChangePasswordRequest() {
+            const user = auth.currentUser;
+            if (!user || !user.email) {
+                showErrorToast('> essa conta não tem email cadastrado para redefinir a senha_');
+                return;
+            }
+            const status = document.getElementById('configPasswordStatus');
+            try {
+                await auth.sendPasswordResetEmail(user.email);
+                if (status) status.textContent = `Link enviado para ${user.email} — confira sua caixa de entrada.`;
+            } catch (err) {
+                console.error('Não foi possível enviar o email de redefinição:', err);
+                if (status) status.textContent = 'Não foi possível enviar o email agora — tente de novo em instantes.';
+            }
+        }
+
+        // ---------- Dados: exportar histórico + favoritos ----------
+        async function handleExportData() {
+            const user = auth.currentUser;
+            if (!user) return;
+            const btn = document.getElementById('configExportBtn');
+            const textoOriginal = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Preparando...';
+            try {
+                const [historicoSnap, favoritosSnap] = await Promise.all([
+                    db.collection('users').doc(user.uid).collection('prompts').orderBy('createdAt', 'desc').get(),
+                    db.collection('users').doc(user.uid).collection('favorites').orderBy('createdAt', 'desc').get(),
+                ]);
+
+                const paraJson = (snap) => snap.docs.map((d) => {
+                    const data = d.data();
+                    return {
+                        ...data,
+                        createdAt: data.createdAt && typeof data.createdAt.toDate === 'function'
+                            ? data.createdAt.toDate().toISOString()
+                            : null,
+                    };
+                });
+
+                const pacote = {
+                    exportadoEm: new Date().toISOString(),
+                    conta: { email: user.email || null, nome: user.displayName || null },
+                    historico: paraJson(historicoSnap),
+                    favoritos: paraJson(favoritosSnap),
+                };
+
+                const blob = new Blob([JSON.stringify(pacote, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `prompt-facil-meus-dados-${new Date().toISOString().slice(0, 10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error('Não foi possível exportar os dados:', err);
+                showErrorToast('> não foi possível gerar o arquivo agora — tente de novo_');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
+            }
+        }
+
+        // ---------- Sobre e Suporte: FAQ ----------
+        const FAQ_ITEMS = [
+            {
+                q: 'O app usa inteligência artificial para gerar o prompt?',
+                a: 'Não — a geração usa modelos de texto prontos, montados a partir do que você preenche no formulário. Isso deixa o resultado previsível e rápido, sem depender de uma IA externa.'
+            },
+            {
+                q: 'Meus prompts ficam salvos em algum lugar?',
+                a: 'Sim, se você estiver com uma conta: o histórico e os favoritos ficam sincronizados entre seus dispositivos. No modo visitante, nada é salvo depois que você sai.'
+            },
+            {
+                q: 'Como cancelo minha assinatura Premium?',
+                a: 'Vá em Configurações > Assinatura e toque em "Cancelar assinatura". O cancelamento é imediato — o plano volta para o Grátis na hora.'
+            },
+            {
+                q: 'Por que algumas IAs abrem com o prompt já preenchido e outras não?',
+                a: 'Isso depende de cada plataforma (ChatGPT, Perplexity e Grok aceitam link com o texto pronto). Nas demais, o prompt já vai copiado — é só colar com Ctrl+V (ou Cmd+V).'
+            },
+            {
+                q: 'Posso excluir minha conta e meus dados?',
+                a: 'Sim, em Configurações > Zona de risco. É permanente e não pode ser desfeito — considere exportar seus dados antes, em Configurações > Dados e Privacidade.'
+            }
+        ];
+
+        function toggleFaqPanel() {
+            const panel = document.getElementById('configFaqPanel');
+            const btn = document.getElementById('configFaqToggleBtn');
+            if (!panel) return;
+            const abrindo = panel.hidden;
+            if (abrindo && !panel.dataset.built) {
+                panel.innerHTML = FAQ_ITEMS.map((item, i) => `
+                    <div class="faq-item" id="faqItem${i}">
+                        <button type="button" class="faq-question" onclick="toggleFaqItem(${i})">
+                            <span>${item.q}</span>
+                            <span class="faq-icon">▾</span>
+                        </button>
+                        <div class="faq-answer">${item.a}</div>
+                    </div>
+                `).join('');
+                panel.dataset.built = '1';
+            }
+            panel.hidden = !abrindo;
+            btn.setAttribute('aria-expanded', String(abrindo));
+            btn.textContent = abrindo ? 'Ocultar perguntas' : 'Ver perguntas';
+        }
+
+        function toggleFaqItem(index) {
+            const item = document.getElementById(`faqItem${index}`);
+            if (item) item.classList.toggle('open');
+        }
+
+        // ---------- Sobre e Suporte: avaliar o app ----------
+        function handleRateApp(plataforma) {
+            const url = STORE_URLS[plataforma];
+            if (url) {
+                window.open(url, '_blank', 'noopener');
+            } else {
+                showErrorToast('> em breve, assim que publicarmos o app na loja_');
             }
         }
 

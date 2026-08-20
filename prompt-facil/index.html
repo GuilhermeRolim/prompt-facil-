@@ -39,8 +39,11 @@
         (function () {
             try {
                 var saved = localStorage.getItem('promptFacil.theme');
-                var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-                if (theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+                var pref = saved || 'system';
+                var resolved = (pref === 'light' || pref === 'dark')
+                    ? pref
+                    : (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+                if (resolved === 'light') document.documentElement.setAttribute('data-theme', 'light');
             } catch (e) {}
         })();
     </script>
@@ -288,12 +291,6 @@
                 <span class="app-brand-mark">✦</span>
                 <span class="app-brand-name">Prompt Fácil</span>
             </div>
-            <button type="button" class="theme-toggle-switch" id="themeToggleApp" onclick="toggleTheme()" role="switch" aria-checked="false" aria-label="Alternar entre modo claro e escuro">
-                <span class="theme-toggle-knob">
-                    <span class="theme-icon-light">☀</span>
-                    <span class="theme-icon-dark">🌙</span>
-                </span>
-            </button>
         </div>
 
         <div id="verifyEmailBanner" class="verify-email-banner" hidden>
@@ -315,12 +312,20 @@
                 </nav>
                 <div class="sidebar-bottom">
                     <span id="planoBadge" class="plano-badge" hidden>Grátis</span>
-                    <button type="button" class="layout-toggle-switch" id="layoutToggleStudio" role="switch" aria-checked="true" aria-label="Alternar para o layout clássico">
-                        <span class="layout-toggle-knob">
-                            <svg class="layout-icon-studio"><use href="#i-grid" xlink:href="#i-grid"/></svg>
-                            <svg class="layout-icon-classic"><use href="#i-classic" xlink:href="#i-classic"/></svg>
-                        </span>
-                    </button>
+                    <div class="sidebar-toggles">
+                        <button type="button" class="theme-toggle-switch" id="themeToggleApp" onclick="toggleTheme()" role="switch" aria-checked="false" aria-label="Alternar entre modo claro e escuro">
+                            <span class="theme-toggle-knob">
+                                <span class="theme-icon-light">☀</span>
+                                <span class="theme-icon-dark">🌙</span>
+                            </span>
+                        </button>
+                        <button type="button" class="layout-toggle-switch" id="layoutToggleStudio" role="switch" aria-checked="true" aria-label="Alternar para o layout clássico">
+                            <span class="layout-toggle-knob">
+                                <svg class="layout-icon-studio"><use href="#i-grid" xlink:href="#i-grid"/></svg>
+                                <svg class="layout-icon-classic"><use href="#i-classic" xlink:href="#i-classic"/></svg>
+                            </span>
+                        </button>
+                    </div>
                 </div>
             </aside>
 
@@ -333,7 +338,7 @@
                     <p>Descreva sua necessidade e receba um prompt rico para copiar e colar em IAs como ChatGPT e Gemini!</p>
 
                     <div id="sharedFormBlock">
-                    <div id="templatesBox" class="templates-box" hidden>
+                    <div id="templatesBox" class="templates-box">
                         <label for="professionSelect">Modelo pronto por profissão (opcional):</label>
                         <select id="professionSelect" onchange="updateTemplateOptions()">
                             <option value="">Nenhum — vou escrever do zero</option>
@@ -343,7 +348,7 @@
                             <select id="templateSelect" onchange="handleTemplateSelected()">
                                 <option value="">Selecione um modelo</option>
                             </select>
-                            <p class="template-hint">O modelo pré-preenche categoria, descrição e detalhes — você pode editar tudo depois. Prefere navegar pelos modelos com descrições? Veja "Modelos por profissão" na barra lateral.</p>
+                            <p class="template-hint">O modelo pré-preenche categoria, descrição e detalhes — você pode editar tudo depois.</p>
                         </div>
                     </div>
 
@@ -518,17 +523,174 @@
                         <div class="settings-row">
                             <div><strong id="configUserEmail">Modo visitante</strong><p>Conta usada para sincronizar seus prompts.</p></div>
                         </div>
-                        <div class="settings-row">
-                            <div><strong>Plano</strong><p id="configPlanoText">Grátis</p></div>
-                            <span class="settings-hint">gerencie em "Assinar Premium" na barra lateral</span>
+                        <div class="settings-row" id="configNameRow" hidden>
+                            <div>
+                                <strong>Nome de exibição</strong>
+                                <p id="configNameStatus">Como você aparece dentro do app.</p>
+                            </div>
+                            <div class="settings-inline-edit">
+                                <input type="text" id="configDisplayName" placeholder="Seu nome" maxlength="60">
+                                <button type="button" id="configSaveNameBtn" class="btn-ghost-small" onclick="handleSaveDisplayName()">Salvar</button>
+                            </div>
+                        </div>
+                        <div class="settings-row" id="configPasswordRow" hidden>
+                            <div><strong>Senha</strong><p id="configPasswordStatus">Enviamos um link por email para você trocar.</p></div>
+                            <button type="button" class="btn-ghost-small" onclick="handleChangePasswordRequest()">Trocar senha</button>
                         </div>
                     </div>
 
-                    <h3 class="settings-title">Privacidade</h3>
+                    <h3 class="settings-title">Assinatura</h3>
+                    <div class="settings-card">
+                        <div class="settings-row">
+                            <div><strong>Plano</strong><p id="configPlanoText">Grátis</p></div>
+                            <button type="button" id="configManageSubscriptionBtn" class="btn-ghost-small" onclick="handleManageSubscription()">Assinar Premium</button>
+                        </div>
+                        <div class="settings-row" id="configPlanoDetalhesRow" hidden>
+                            <div><strong>Detalhes da assinatura</strong><p id="configPlanoDetalhes">—</p></div>
+                        </div>
+                    </div>
+                    <div class="settings-card settings-card-nested" id="configPaymentHistoryCard" hidden>
+                        <div class="settings-subtitle">Histórico de pagamentos</div>
+                        <div id="configPaymentHistory" class="payment-history-list">
+                            <p class="settings-empty-note">Nenhum pagamento confirmado ainda.</p>
+                        </div>
+                    </div>
+
+                    <h3 class="settings-title">Preferências do gerador</h3>
+                    <div class="settings-card">
+                        <div class="settings-row">
+                            <div><strong>IA de destino padrão</strong><p>Pré-seleciona ao gerar um novo prompt.</p></div>
+                            <select id="prefDefaultAiTarget" class="settings-select" onchange="savePreferences()">
+                                <option value="">Perguntar sempre</option>
+                                <option value="chatgpt">ChatGPT</option>
+                                <option value="gemini">Gemini</option>
+                                <option value="claude">Claude</option>
+                                <option value="perplexity">Perplexity</option>
+                                <option value="copilot">Copilot</option>
+                                <option value="deepseek">DeepSeek</option>
+                                <option value="grok">Grok</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <div><strong>Categoria padrão</strong><p>Já vem selecionada ao abrir "Novo prompt".</p></div>
+                            <select id="prefDefaultCategory" class="settings-select" onchange="savePreferences()">
+                                <option value="pesquisa">Pesquisa Geral</option>
+                                <option value="tecnico">Soluções Técnicas</option>
+                                <option value="dados">Análise de Dados</option>
+                                <option value="traducao">Tradução e Revisão de Texto</option>
+                                <option value="imagem">Prompt para Geração de Imagem</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <div><strong>Nível de profundidade padrão</strong><p>Aplicado a todo prompt novo.</p></div>
+                            <select id="prefDefaultDepth" class="settings-select" onchange="savePreferences()">
+                                <option value="iniciante">Iniciante</option>
+                                <option value="intermediario">Intermediário</option>
+                                <option value="avancado">Avançado</option>
+                            </select>
+                        </div>
+                        <div class="settings-row" id="configAutoSaveRow" hidden>
+                            <div><strong>Salvar histórico automaticamente</strong><p>Desligue se preferir gerar prompts sem guardá-los.</p></div>
+                            <label class="switch">
+                                <input type="checkbox" id="prefAutoSaveHistory" checked onchange="savePreferences()">
+                                <span class="switch-track"><span class="switch-knob"></span></span>
+                            </label>
+                        </div>
+                        <p class="settings-inline-status" id="prefsSaveStatus"></p>
+                    </div>
+
+                    <h3 class="settings-title">Aparência</h3>
+                    <div class="settings-card">
+                        <div class="settings-row">
+                            <div><strong>Tema</strong><p>Claro, escuro, ou seguir o sistema do seu aparelho.</p></div>
+                            <div class="theme-option-group" id="themeOptionGroup" role="radiogroup" aria-label="Tema">
+                                <button type="button" class="theme-option-btn" data-theme-choice="light" onclick="setThemePreference('light')">☀ Claro</button>
+                                <button type="button" class="theme-option-btn" data-theme-choice="dark" onclick="setThemePreference('dark')">🌙 Escuro</button>
+                                <button type="button" class="theme-option-btn" data-theme-choice="system" onclick="setThemePreference('system')">💻 Sistema</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="configNotificationsSection" hidden>
+                        <h3 class="settings-title">Notificações</h3>
+                        <div class="settings-card" id="configNotificationsCard">
+                            <div class="settings-row">
+                                <div><strong>Novidades por email</strong><p>Avisos sobre novos recursos do app.</p></div>
+                                <label class="switch">
+                                    <input type="checkbox" id="prefEmailNews" onchange="savePreferences()">
+                                    <span class="switch-track"><span class="switch-knob"></span></span>
+                                </label>
+                            </div>
+                            <div class="settings-row">
+                                <div><strong>Aviso de renovação</strong><p>Email antes da próxima cobrança da assinatura.</p></div>
+                                <label class="switch">
+                                    <input type="checkbox" id="prefEmailBilling" onchange="savePreferences()">
+                                    <span class="switch-track"><span class="switch-knob"></span></span>
+                                </label>
+                            </div>
+                            <p class="settings-note">Essas preferências já ficam salvas na sua conta. O envio automático desses emails ainda depende de uma integração que vamos ligar em breve — por enquanto, elas só guardam sua escolha.</p>
+                        </div>
+                    </div>
+
+                    <h3 class="settings-title">Dados e Privacidade</h3>
                     <div class="settings-card">
                         <div class="settings-row">
                             <div><strong>Política de Privacidade</strong><p>Como tratamos seus dados, conforme a LGPD.</p></div>
                             <a href="politica-privacidade.html" class="btn-ghost-small" onclick="return openPrivacyModal(event)">Abrir</a>
+                        </div>
+                        <div class="settings-row">
+                            <div><strong>Termos de Uso</strong><p>Regras de uso do app e da assinatura.</p></div>
+                            <a href="termos-de-uso.html" class="btn-ghost-small" onclick="return openTermsModal(event)">Abrir</a>
+                        </div>
+                        <div class="settings-row" id="configExportRow" hidden>
+                            <div><strong>Exportar meus dados</strong><p>Baixe seu histórico e favoritos em um arquivo .json.</p></div>
+                            <button type="button" class="btn-ghost-small" onclick="handleExportData()" id="configExportBtn">Exportar</button>
+                        </div>
+                    </div>
+
+                    <div id="configSecuritySection" hidden>
+                        <h3 class="settings-title">Segurança</h3>
+                        <div class="settings-card" id="configSecurityCard">
+                            <div class="settings-row">
+                                <div><strong>Sessão atual</strong><p id="configSessionInfo">—</p></div>
+                            </div>
+                            <p class="settings-note">Gerenciamento de múltiplos dispositivos e verificação em duas etapas chegam em uma versão futura.</p>
+                        </div>
+                    </div>
+
+                    <div id="configFutureSection" hidden>
+                        <h3 class="settings-title">Recursos futuros</h3>
+                        <div class="settings-card" id="configFutureCard">
+                            <div class="settings-row">
+                                <div><strong>Testar novidades em primeira mão</strong><p>Ative para receber recursos beta antes de todo mundo.</p></div>
+                                <label class="switch">
+                                    <input type="checkbox" id="prefBetaOptIn" onchange="savePreferences()">
+                                    <span class="switch-track"><span class="switch-knob"></span></span>
+                                </label>
+                            </div>
+                            <div class="settings-row">
+                                <div><strong>Usar minha própria chave de API (BYOK)</strong><p>Para gerar prompts com IA de verdade, além dos modelos prontos.</p></div>
+                                <span class="settings-hint settings-hint-badge">Em breve</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="settings-title">Sobre e Suporte</h3>
+                    <div class="settings-card">
+                        <div class="settings-row">
+                            <div><strong>Versão do app</strong><p id="configAppVersion">—</p></div>
+                        </div>
+                        <div class="settings-row">
+                            <div><strong>Central de ajuda</strong><p>Perguntas frequentes sobre o app.</p></div>
+                            <button type="button" class="btn-ghost-small" onclick="toggleFaqPanel()" id="configFaqToggleBtn" aria-expanded="false">Ver perguntas</button>
+                        </div>
+                        <div id="configFaqPanel" class="faq-panel" hidden></div>
+                        <div class="settings-row">
+                            <div><strong>Avaliar o app</strong><p>Ajuda outras pessoas a encontrarem o Prompt Fácil.</p></div>
+                            <div class="settings-inline-edit">
+                                <button type="button" class="btn-ghost-small" onclick="handleRateApp('android')">Play Store</button>
+                                <button type="button" class="btn-ghost-small" onclick="handleRateApp('ios')">App Store</button>
+                            </div>
                         </div>
                     </div>
 
@@ -548,6 +710,18 @@
                 </div>
 
             </main>
+        </div>
+    </div>
+
+    <!-- Termos de Uso em painel sobreposto (mesmo padrão da Política de Privacidade) -->
+    <div id="termsOverlay" role="dialog" aria-modal="true" aria-labelledby="termsTitle">
+        <div id="termsPanel">
+            <div class="terminal-bar history-header">
+                <span></span><span></span><span></span>
+                <span class="terminal-label" id="termsTitle" style="flex:1;">termos-de-uso.html</span>
+                <button type="button" id="termsClose" class="history-close-btn" aria-label="Fechar termos de uso" onclick="closeTermsModal()">✕</button>
+            </div>
+            <iframe id="termsFrame" title="Termos de Uso" loading="lazy"></iframe>
         </div>
     </div>
 

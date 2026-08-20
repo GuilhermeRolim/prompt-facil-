@@ -1,12 +1,21 @@
 # Como automatizar a liberação do plano premium (Pix via Asaas)
 
-Este guia coloca no ar as duas Cloud Functions da pasta `functions/`:
+Este guia coloca no ar as três Cloud Functions da pasta `functions/`:
 
 - `criarAssinatura`: chamada pelo próprio app quando a pessoa clica em
   "💎 Assinar Premium" — cria a assinatura no Asaas e mostra o QR Code Pix.
 - `webhookAsaas`: escuta o aviso do Asaas quando o Pix é pago e troca o
   campo `plano` de `gratis` para `premium` sozinha — é isso que torna o
-  processo automático, sem você precisar editar nada no Console.
+  processo automático, sem você precisar editar nada no Console. Desde esta
+  versão, ela também grava cada cobrança confirmada/atrasada/cancelada em
+  `users/{uid}/pagamentos/{paymentId}`, que é o que alimenta o "Histórico de
+  pagamentos" em Configurações > Assinatura no app.
+- `cancelarAssinatura`: chamada pelo botão "Cancelar assinatura" em
+  Configurações. Cancela a assinatura no Asaas (impede novas cobranças) e
+  já rebaixa a conta para o plano grátis na hora — sem cálculo de
+  proporcionalidade do período já pago (o app não guarda uma data de
+  expiração hoje, então esse é o comportamento mais simples e honesto de
+  expor pra quem está cancelando).
 
 Antes de começar: **teste tudo isso no ambiente sandbox do Asaas primeiro**
 (o código já vem apontando pra lá). Só troque para produção depois de ver o

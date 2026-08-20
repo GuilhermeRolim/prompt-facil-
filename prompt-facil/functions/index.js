@@ -185,6 +185,21 @@ exports.webhookAsaas = onRequest({ secrets: [ASAAS_WEBHOOK_TOKEN] }, async (req,
       await userRef.set({ plano: 'gratis' }, { merge: true });
       logger.info('Plano revogado automaticamente', { uid, tipo });
     }
+
+    // Histórico de pagamentos (Configurações > Assinatura no app): guarda um
+    // registro por cobrança, só leitura pro dono da conta (ver regras no
+    // LEIA-ME-FIREBASE.md). Não afeta a liberação do plano acima — é só o
+    // extrato que a pessoa vê.
+    if (EVENTOS_QUE_LIBERAM.includes(tipo) || EVENTOS_QUE_BLOQUEIAM.includes(tipo)) {
+      const statusRegistrado = EVENTOS_QUE_LIBERAM.includes(tipo) ? 'CONFIRMED' : (payment.status || 'OVERDUE');
+      await userRef.collection('pagamentos').doc(String(payment.id)).set({
+        status: statusRegistrado,
+        valor: typeof payment.value === 'number' ? payment.value : null,
+        confirmadoEm: admin.firestore.FieldValue.serverTimestamp(),
+        evento: tipo,
+      }, { merge: true });
+    }
+
     // Outros tipos de evento (ex.: PAYMENT_CREATED, PAYMENT_UPDATED) são
     // apenas confirmados com 200 e ignorados — não mudam o plano.
     res.status(200).send('ok');
@@ -193,4 +208,52 @@ exports.webhookAsaas = onRequest({ secrets: [ASAAS_WEBHOOK_TOKEN] }, async (req,
     // Devolve 500 de propósito: o Asaas tenta reentregar o evento depois.
     res.status(500).send('erro interno');
   }
+});
+
+// ------------------------------------------------------------
+// 3. cancelarAssinatura
+// ------------------------------------------------------------
+// Chamada pelo botão "Cancelar assinatura" em Configurações > Assinatura.
+// Cancela a assinatura no Asaas (impede novas cobranças) e já rebaixa a
+// conta para o plano grátis imediatamente — sem proporcionalidade de
+// reembolso do período já pago, o que é o comportamento mais simples e
+// honesto de expor na interface (evita prometer uma data de expiração que
+// o app não rastreia hoje).
+exports.cancelarAssinatura = onCall({ secrets: [ASAAS_API_KEY] }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Você precisa estar logado.');
+  }
+
+  const uid = request.auth.uid;
+  const apiKey = ASAAS_API_KEY.value();
+  const userRef = db.collection('users').doc(uid);
+  const userSnap = await userRef.get();
+
+  if (!userSnap.exists) {
+    throw new HttpsError('not-found', 'Perfil não encontrado.');
+  }
+  const userData = userSnap.data();
+  const assinaturaId = userData.asaasSubscriptionId;
+
+  if (!assinaturaId) {
+    // Sem assinatura registrada no Asaas — só garante que o plano reflete isso.
+    await userRef.set({ plano: 'gratis' }, { merge: true });
+    return { ok: true };
+  }
+
+  try {
+    await asaasFetch(`/subscriptions/${assinaturaId}`, { method: 'DELETE' }, apiKey);
+  } catch (err) {
+    // Se o Asaas já não tem mais essa assinatura (ex.: cancelada por outro
+    // meio), seguimos em frente e rebaixamos o plano mesmo assim.
+    logger.warn('Falha ao cancelar assinatura no Asaas (seguindo para rebaixar o plano)', { uid, error: err.message });
+  }
+
+  await userRef.set({
+    plano: 'gratis',
+    canceladoEm: admin.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  logger.info('Assinatura cancelada pelo usuário', { uid });
+  return { ok: true };
 });

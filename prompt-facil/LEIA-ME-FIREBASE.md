@@ -92,6 +92,16 @@ service cloud.firestore {
       match /favorites/{favoriteId} {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
+
+      // Histórico de pagamentos (Configurações > Assinatura) — só leitura, e só
+      // pro dono da conta. A escrita é feita exclusivamente pela Cloud Function
+      // webhookAsaas via Admin SDK, que ignora estas regras — por isso "write: if false"
+      // aqui não impede o webhook de funcionar, só impede o navegador de manipular
+      // o próprio histórico de pagamentos.
+      match /pagamentos/{paymentId} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow write: if false;
+      }
     }
 
     // Prompts compartilhados por link — feature nova. Fica FORA de /users/{uid}
