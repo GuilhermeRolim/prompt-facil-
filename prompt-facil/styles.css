@@ -1197,6 +1197,41 @@
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(var(--shadow-rgb), 0.6), 0 0 40px rgba(0, 229, 255, 0.08);
 }
+#configOverlay {
+    position: fixed;
+    inset: 0;
+    background: var(--modal-backdrop);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+    z-index: 1300;
+}
+#configOverlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+#configPanel {
+    width: min(94vw, 620px);
+    max-height: min(88vh, 800px);
+    display: flex;
+    flex-direction: column;
+    background: var(--surface-solid);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(var(--shadow-rgb), 0.6), 0 0 40px rgba(0, 229, 255, 0.08);
+}
+#configPanel #sharedConfigBlock {
+    overflow-y: auto;
+    padding: 4px 20px 20px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--cyan) var(--scroll-track);
+}
 .history-header {
     display: flex;
     align-items: center;
@@ -2379,7 +2414,9 @@
 }
 .settings-inline-edit {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: flex-end;
     gap: 8px;
     flex-shrink: 0;
 }
@@ -2456,6 +2493,8 @@
 /* Grupo de opções de tema (Claro / Escuro / Sistema) */
 .theme-option-group {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: 6px;
     flex-shrink: 0;
 }
@@ -2494,9 +2533,10 @@
 }
 .payment-history-item {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 6px 10px;
     padding: 10px 12px;
     border: 1px solid var(--border-soft);
     border-radius: var(--radius-md);

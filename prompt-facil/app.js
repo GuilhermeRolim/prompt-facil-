@@ -120,8 +120,7 @@
             const studioFavoritosPage = document.querySelector('.studio-page[data-page="favoritos"]');
             const studioLinksPage = document.querySelector('.studio-page[data-page="links"]');
             const studioBibliotecaPage = document.querySelector('.studio-page[data-page="biblioteca"]');
-            const configLogoutRow = document.getElementById('configLogoutRow');
-            const configDeleteRow = document.getElementById('configDeleteRow');
+            const studioConfigPage = document.querySelector('.studio-page[data-page="config"]');
 
             const classicTopRow = document.querySelector('#classicLayout .app-top-row');
             const classicMenu = document.querySelector('#classicLayout .app-menu');
@@ -130,17 +129,15 @@
             const classicLayoutToggle = document.getElementById('layoutToggleClassic');
             const classicEyebrow = document.querySelector('#classicLayout .eyebrow');
             const classicFooter = document.querySelector('#classicLayout .app-footer');
-            const classicFooterLinks = document.querySelector('#classicLayout .app-footer-links');
 
             const sharedFormBlock = document.getElementById('sharedFormBlock');
             const sharedHistoryBlock = document.getElementById('sharedHistoryBlock');
             const sharedFavoritesBlock = document.getElementById('sharedFavoritesBlock');
             const sharedLibraryBlock = document.getElementById('sharedLibraryBlock');
+            const sharedConfigBlock = document.getElementById('sharedConfigBlock');
             const mySharesListEl = document.getElementById('mySharesList');
             const planoBadgeEl = document.getElementById('planoBadge');
             const verifyBannerEl = document.getElementById('verifyEmailBanner');
-            const deleteAccountBtnEl = document.getElementById('deleteAccountBtn');
-            const logoutBtnEl = document.getElementById('logoutBtn');
             const themeToggleEl = document.getElementById('themeToggleApp');
             const historyTriggerEl = document.getElementById('historyTrigger');
             const favoritesTriggerEl = document.getElementById('favoritesTrigger');
@@ -151,6 +148,7 @@
             const favoritesPanelEl = document.getElementById('favoritesPanel');
             const mySharesPanelEl = document.getElementById('mySharesPanel');
             const publicLibraryPanelEl = document.getElementById('publicLibraryPanel');
+            const configPanelEl = document.getElementById('configPanel');
 
             if (isStudio) {
                 // Garante que a biblioteca não fique com listeners ativos vindos do
@@ -162,10 +160,9 @@
                 studioFavoritosPage.appendChild(sharedFavoritesBlock);
                 studioLinksPage.appendChild(mySharesListEl);
                 studioBibliotecaPage.appendChild(sharedLibraryBlock);
+                studioConfigPage.appendChild(sharedConfigBlock);
                 studioSidebarBottom.insertBefore(planoBadgeEl, studioSidebarToggles);
                 studioShell.parentNode.insertBefore(verifyBannerEl, studioShell);
-                configLogoutRow.appendChild(logoutBtnEl);
-                configDeleteRow.appendChild(deleteAccountBtnEl);
                 studioSidebarToggles.insertBefore(themeToggleEl, document.getElementById('layoutToggleStudio'));
                 studioNav.insertBefore(historyTriggerEl, studioModelosBtn);
                 studioNav.insertBefore(favoritesTriggerEl, studioModelosBtn);
@@ -177,6 +174,7 @@
                 document.getElementById('favoritesOverlay').classList.remove('show');
                 document.getElementById('mySharesOverlay').classList.remove('show');
                 document.getElementById('publicLibraryOverlay').classList.remove('show');
+                document.getElementById('configOverlay').classList.remove('show');
                 document.getElementById('appMenuDropdown').classList.remove('show');
             } else {
                 // Mesma garantia, na direção contrária.
@@ -188,15 +186,14 @@
                 classicMenuDropdown.insertBefore(mySharesTriggerEl, classicMenuDivider);
                 classicMenuDropdown.insertBefore(publicLibraryTriggerEl, classicMenuDivider);
                 classicMenuDropdown.insertBefore(assinarTriggerEl, classicMenuDivider);
-                classicMenuDropdown.appendChild(logoutBtnEl);
                 classicTopRow.insertBefore(themeToggleEl, classicLayoutToggle);
                 classicTopRow.parentNode.insertBefore(verifyBannerEl, classicEyebrow);
                 classicTopRow.parentNode.insertBefore(sharedFormBlock, classicFooter);
-                classicFooter.insertBefore(deleteAccountBtnEl, classicFooterLinks);
                 historyPanelEl.appendChild(sharedHistoryBlock);
                 favoritesPanelEl.appendChild(sharedFavoritesBlock);
                 mySharesPanelEl.appendChild(mySharesListEl);
                 publicLibraryPanelEl.appendChild(sharedLibraryBlock);
+                configPanelEl.appendChild(sharedConfigBlock);
             }
 
             document.getElementById('templatesBox').hidden = isStudio;
@@ -1716,7 +1713,32 @@
                 closeMySharesPanel();
                 closeSharedPromptPanel();
                 closePublicLibraryPanel();
+                closeConfigPanel();
             }
+        });
+
+        // ---------- Configurações: entrada única, mesmo conteúdo nos dois layouts ----------
+        // No Studio, "Configurações" é uma página fixa da barra lateral (showStudioPage).
+        // No Clássico, é este painel sobreposto — mas ambos mostram o mesmíssimo
+        // elemento #sharedConfigBlock, só realocado por applyLayout(). Ver openHistoryPanel
+        // acima para o mesmo padrão já usado em Histórico/Favoritos/etc.
+        function openConfigPanel() {
+            if (currentLayout === 'classic') {
+                document.getElementById('configOverlay').classList.add('show');
+            } else {
+                showStudioPage('config');
+            }
+        }
+
+        function closeConfigPanel() {
+            if (currentLayout === 'classic') {
+                document.getElementById('configOverlay').classList.remove('show');
+            }
+        }
+
+        document.getElementById('configClose').addEventListener('click', closeConfigPanel);
+        document.getElementById('configOverlay').addEventListener('click', (e) => {
+            if (e.target.id === 'configOverlay') closeConfigPanel();
         });
 
         // ================================

@@ -180,6 +180,19 @@
         </div>
     </div>
 
+    <!-- Configurações no modo Clássico: mesmo conteúdo do painel "config" do Studio
+         (é o mesmo elemento #sharedConfigBlock, só movido pra cá via JS em applyLayout) —
+         nenhuma configuração fica disponível em um layout e ausente no outro. -->
+    <div id="configOverlay" role="dialog" aria-modal="true" aria-labelledby="configTitle">
+        <div id="configPanel">
+            <div class="terminal-bar history-header">
+                <span></span><span></span><span></span>
+                <span class="terminal-label" id="configTitle" style="flex:1;">configuracoes.txt</span>
+                <button type="button" id="configClose" class="history-close-btn" aria-label="Fechar configurações">✕</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Painel do prompt recebido por link compartilhado (continua como painel sobreposto — é um link recebido, não um destino de navegação) -->
     <div id="sharedPromptOverlay" role="dialog" aria-modal="true" aria-labelledby="sharedPromptTitle">
         <div id="sharedPromptPanel">
@@ -518,6 +531,7 @@
                         <span class="terminal-label">configuracoes.txt</span>
                     </div>
 
+                    <div id="sharedConfigBlock">
                     <h3 class="settings-title">Conta</h3>
                     <div class="settings-card">
                         <div class="settings-row">
@@ -707,6 +721,7 @@
                     </div>
 
                     <p class="settings-feedback"><a href="mailto:promptez2026@gmail.com">Sugestões / feedback</a></p>
+                    </div>
                 </div>
 
             </main>
@@ -743,7 +758,8 @@
                     <!-- historyTrigger, favoritesTrigger, mySharesTrigger, publicLibraryTrigger, assinarTrigger
                          são inseridos aqui via JS, nessa ordem, antes do divisor -->
                     <div class="app-menu-divider" id="classicMenuDivider"></div>
-                    <!-- logoutBtn é inserido aqui via JS -->
+                    <button type="button" class="nav-item" id="configTrigger" onclick="openConfigPanel()"><svg class="nav-icon"><use href="#i-settings" xlink:href="#i-settings"/></svg>Configurações</button>
+                    <!-- logoutBtn/deleteAccountBtn ficam dentro de Configurações (Zona de risco) — mesmo lugar nos dois layouts -->
                 </div>
             </div>
             <button type="button" class="layout-toggle-switch" id="layoutToggleClassic" role="switch" aria-checked="false" aria-label="Alternar para o layout Studio">
@@ -764,7 +780,6 @@
         <!-- sharedFormBlock é inserido aqui via JS -->
 
         <div class="app-footer">
-            <!-- deleteAccountBtn é inserido aqui via JS -->
             <div class="app-footer-links">
                 <a href="politica-privacidade.html" onclick="return openPrivacyModal(event)">Política de Privacidade</a>
                 <span aria-hidden="true">·</span>

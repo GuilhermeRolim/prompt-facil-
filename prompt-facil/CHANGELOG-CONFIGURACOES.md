@@ -61,6 +61,42 @@ média, e boa parte da baixa.
   `STORE_URLS` no topo de `app.js`** assim que o app for publicado; até lá,
   mostram um aviso "em breve"
 
+## 🆕 Configurações também no layout Clássico
+
+O painel de Configurações agora é **o mesmo elemento** nos dois layouts —
+segue exatamente o padrão que o projeto já usava para Histórico, Favoritos,
+Meus Links e Biblioteca Pública: um único bloco de conteúdo (`#sharedConfigBlock`)
+que é realocado via JS (`applyLayout`) conforme o layout ativo, em vez de
+duas versões separadas do mesmo conteúdo.
+
+- **Studio**: continua como página fixa da barra lateral ("⚙ Configurações").
+- **Clássico**: novo item "⚙ Configurações" no menu (☰ Menu), que abre um
+  painel sobreposto com o conteúdo idêntico — mesmas seções, mesmos campos,
+  mesmos botões.
+- **Sair** e **Excluir minha conta** agora moram só dentro de Configurações
+  (seção "Zona de risco") nos dois layouts — antes, no Clássico, ficavam
+  soltos no menu e no rodapé. Isso elimina duplicação de elementos e garante
+  que uma mudança em Configurações nunca fique disponível só num dos dois
+  layouts.
+
+## 📱 Validação mobile
+
+Testado com viewports reais (375×667 iPhone SE, 390×844 iPhone 14, 360×800
+Android, e 320×640 — a tela mais estreita ainda em uso hoje) nos dois
+layouts, com e sem conta:
+
+- **Zero overflow horizontal real** em qualquer combinação testada
+  (`document.documentElement.scrollWidth` sempre igual à largura da tela).
+- Encontrei um ponto frágil: o grupo de botões de tema (Claro/Escuro/Sistema)
+  cabia em 320px por menos de 2px de margem — só funcionava por sorte, podia
+  quebrar com uma fonte ligeiramente diferente ou zoom do usuário. Corrigido:
+  agora ele — e o histórico de pagamentos, e os pares de botão
+  nome+salvar / Play Store+App Store — têm permissão pra quebrar linha se a
+  tela apertar, em vez de arriscar estourar.
+- A barra de navegação horizontal do Studio (que rola de lado no celular)
+  já existia antes desta atualização — não é um bug, é o padrão de menu
+  mobile do layout Studio.
+
 ## ⚠️ Decisões importantes pra você revisar
 
 1. **Cancelamento de assinatura é imediato**, sem manter o acesso premium
