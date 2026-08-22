@@ -2014,6 +2014,9 @@
     gap: 12px;
     margin-bottom: 16px;
 }
+.studio-menu-trigger {
+    display: none;
+}
 .app-brand {
     display: flex;
     align-items: center;
@@ -2628,25 +2631,37 @@
 
 /* ---------- Responsivo — sidebar vira barra horizontal no celular ---------- */
 @media (max-width: 860px) {
+    .studio-menu-trigger {
+        display: inline-flex;
+    }
     .studio-shell {
         grid-template-columns: 1fr;
+        position: relative;
     }
+    /* A barra lateral vira um menu suspenso: fica escondida até o botão
+       "☰ Menu" ser tocado, e some de novo ao escolher uma página — em vez
+       da faixa horizontal rolável de antes, que cortava botões e confundia. */
     .studio-sidebar {
-        position: static;
-        flex-direction: row;
-        overflow-x: auto;
-        padding: 10px;
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1200;
+        max-height: min(75vh, 560px);
+        overflow-y: auto;
+        box-shadow: 0 16px 40px rgba(var(--shadow-rgb), 0.55);
+        scrollbar-width: thin;
+        scrollbar-color: var(--cyan) var(--scroll-track);
+    }
+    .studio-sidebar.mobile-open {
+        display: flex;
     }
     .studio-nav {
-        flex-direction: row;
-        flex: 1;
+        flex-direction: column;
     }
     .nav-item {
-        white-space: nowrap;
-        flex-shrink: 0;
-    }
-    .studio-sidebar .plano-badge {
-        flex-shrink: 0;
+        white-space: normal;
     }
     .studio-page {
         padding: 26px 20px;

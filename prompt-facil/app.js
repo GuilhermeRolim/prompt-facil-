@@ -242,6 +242,53 @@
             if (e.key === 'Escape') closeAppMenu();
         });
 
+        // ---------- Menu do Studio em telas estreitas (celular) ----------
+        // Em telas largas, a barra lateral do Studio fica sempre visível (nav vertical
+        // fixa). Em telas de celular ela virava uma faixa horizontal rolável com todos
+        // os botões, o que ficava confuso e cortava alguns itens visualmente. Agora,
+        // abaixo de 860px, a barra vira este menu suspenso (mesmo padrão visual do
+        // "☰ Menu" do layout Clássico), acionado por um botão hambúrguer no topo.
+        function openStudioMobileMenu() {
+            document.getElementById('studioSidebar').classList.add('mobile-open');
+            document.getElementById('studioMenuTrigger').classList.add('is-open');
+            document.getElementById('studioMenuTrigger').setAttribute('aria-expanded', 'true');
+        }
+
+        function closeStudioMobileMenu() {
+            const sidebar = document.getElementById('studioSidebar');
+            const trigger = document.getElementById('studioMenuTrigger');
+            if (sidebar) sidebar.classList.remove('mobile-open');
+            if (trigger) {
+                trigger.classList.remove('is-open');
+                trigger.setAttribute('aria-expanded', 'false');
+            }
+        }
+
+        document.getElementById('studioMenuTrigger').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = document.getElementById('studioSidebar').classList.contains('mobile-open');
+            if (isOpen) {
+                closeStudioMobileMenu();
+            } else {
+                openStudioMobileMenu();
+            }
+        });
+        document.addEventListener('click', (e) => {
+            const sidebar = document.getElementById('studioSidebar');
+            if (sidebar && sidebar.classList.contains('mobile-open') && !sidebar.contains(e.target) && e.target.id !== 'studioMenuTrigger') {
+                closeStudioMobileMenu();
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeStudioMobileMenu();
+        });
+        // Se a tela for alargada (ex.: girar o celular, ou redimensionar a janela)
+        // passando do ponto em que a barra volta a ficar sempre visível, garante que
+        // o menu não fique "aberto" escondido por trás do layout de desktop.
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 860) closeStudioMobileMenu();
+        });
+
         // ---------- Navegação da barra lateral (Studio) — ver showStudioPage() mais abaixo ----------
         // Troca qual .studio-page fica visível e destaca o item correspondente na
         // barra lateral. Cada página pode ter uma ação ao entrar (ex.: renderizar
@@ -251,6 +298,7 @@
         let currentStudioPage = 'novo';
 
         function showStudioPage(page) {
+            closeStudioMobileMenu();
             if (page === currentStudioPage) return;
 
             if (currentStudioPage === 'biblioteca') {
@@ -1324,7 +1372,7 @@
             badge.classList.toggle('is-premium', isPremium());
 
             const trigger = document.getElementById('assinarTrigger');
-            if (trigger) trigger.hidden = isPremium();
+            if (trigger) trigger.hidden = isPremium() || !auth.currentUser;
 
             const configPlanoText = document.getElementById('configPlanoText');
             if (configPlanoText && auth.currentUser) {
@@ -1942,6 +1990,7 @@
                 return;
             }
             closeAppMenu();
+            closeStudioMobileMenu();
             document.getElementById('assinarOverlay').classList.add('show');
             document.getElementById('assinarConteudo').innerHTML = '<p>Gerando o QR Code do Pix...</p>';
 
